@@ -1,0 +1,30 @@
+{
+  "name": "dragon-quest-1",
+  "version": "1.0.0",
+  "description": "ドラゴンクエスト1のブラウザ実装",
+  "main": "src/main.js",
+  "scripts": {
+    "test": "jest",
+    "test:watch": "jest --watch",
+    "test:coverage": "jest --coverage",
+    "start": "python3 -m http.server 8000"
+  },
+  "keywords": ["game", "rpg", "dragon-quest", "javascript"],
+  "author": "",
+  "license": "MIT",
+  "devDependencies": {
+    "jest": "^29.7.0",
+    "jest-environment-jsdom": "^29.7.0"
+  },
+  "jest": {
+    "testEnvironment": "jsdom",
+    "setupFilesAfterEnv": ["<rootDir>/tests/setup.js"],
+    "collectCoverageFrom": [
+      "src/**/*.js",
+      "!src/main.js"
+    ],
+    "testMatch": [
+      "<rootDir>/tests/**/*.test.js"
+    ]
+  }
+}
