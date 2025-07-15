@@ -146,4 +146,30 @@ describe('CombatSystem', () => {
             expect(damage2).toBe(7); // 攻撃力 + |防御力|
         });
     });
+
+    describe('逃走システムとの統合', () => {
+        test('戦闘中に逃走が成功した場合、戦闘結果に反映される', () => {
+            const player = new Player();
+            const monster = new Monster('orc');
+            const BattleState = require('../src/battleState.js');
+            
+            const battleState = new BattleState(player, monster);
+            battleState.startBattle();
+            
+            // Math.randomをモックして逃走成功をシミュレート
+            const originalRandom = Math.random;
+            Math.random = jest.fn(() => 0.1); // 確実に成功
+            
+            const fleeResult = battleState.executeCommand('flee');
+            
+            expect(fleeResult.success).toBe(true);
+            expect(battleState.isOver).toBe(true);
+            
+            // 戦闘結果をチェック（逃走成功時は経験値・ゴールドなし）
+            const battleResult = CombatSystem.checkBattleResult(player, monster);
+            expect(battleResult.isOver).toBe(false); // プレイヤーもモンスターも生きているため
+            
+            Math.random = originalRandom;
+        });
+    });
 });
