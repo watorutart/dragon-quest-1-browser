@@ -1,0 +1,170 @@
+/**
+ * CombatSystem クラス - 戦闘システムとダメージ計算を管理
+ */
+
+class CombatSystem {
+    /**
+     * ダメージを計算する
+     * ドラゴンクエスト1の基本ダメージ計算式: 攻撃力 - 防御力（最小1）
+     * @param {number} attack - 攻撃力
+     * @param {number} defense - 防御力
+     * @returns {number} 計算されたダメージ
+     */
+    static calculateDamage(attack, defense) {
+        const MIN_DAMAGE = 1;
+        
+        // 入力値の正規化
+        const normalizedAttack = this._normalizeAttack(attack);
+        const normalizedDefense = this._normalizeDefense(defense);
+        
+        // 基本ダメージ計算
+        const baseDamage = normalizedAttack - normalizedDefense;
+        
+        // 最小ダメージ保証
+        return Math.max(MIN_DAMAGE, baseDamage);
+    }
+
+    /**
+     * 攻撃力を正規化する
+     * @private
+     * @param {number} attack - 攻撃力
+     * @returns {number} 正規化された攻撃力
+     */
+    static _normalizeAttack(attack) {
+        return Math.max(0, attack);
+    }
+
+    /**
+     * 防御力を正規化する
+     * @private
+     * @param {number} defense - 防御力
+     * @returns {number} 正規化された防御力
+     */
+    static _normalizeDefense(defense) {
+        // 負の防御力は攻撃力を増加させる効果として扱う
+        return defense < 0 ? defense : Math.max(0, defense);
+    }
+
+    /**
+     * プレイヤーがモンスターを攻撃する
+     * @param {Player} player - プレイヤーオブジェクト
+     * @param {Monster} monster - モンスターオブジェクト
+     * @returns {Object} 攻撃結果
+     */
+    static playerAttack(player, monster) {
+        const damage = this.calculateDamage(player.attack, monster.defense);
+        monster.takeDamage(damage);
+        
+        return {
+            attacker: 'player',
+            target: 'monster',
+            damage: damage,
+            targetHp: monster.hp
+        };
+    }
+
+    /**
+     * モンスターがプレイヤーを攻撃する
+     * @param {Monster} monster - モンスターオブジェクト
+     * @param {Player} player - プレイヤーオブジェクト
+     * @returns {Object} 攻撃結果
+     */
+    static monsterAttack(monster, player) {
+        const damage = this.calculateDamage(monster.attack, player.defense);
+        player.takeDamage(damage);
+        
+        return {
+            attacker: 'monster',
+            target: 'player',
+            damage: damage,
+            targetHp: player.hp
+        };
+    }
+
+    /**
+     * 戦闘結果をチェックする
+     * @param {Player} player - プレイヤーオブジェクト
+     * @param {Monster} monster - モンスターオブジェクト
+     * @returns {Object} 戦闘結果
+     */
+    static checkBattleResult(player, monster) {
+        if (monster.isDead()) {
+            return {
+                isOver: true,
+                winner: 'player',
+                experienceGained: monster.getExperienceReward(),
+                goldGained: monster.getGoldReward()
+            };
+        }
+        
+        if (player.isDead()) {
+            return {
+                isOver: true,
+                winner: 'monster',
+                experienceGained: 0,
+                goldGained: 0
+            };
+        }
+        
+        return {
+            isOver: false,
+            winner: null,
+            experienceGained: 0,
+            goldGained: 0
+        };
+    }
+
+    /**
+     * 戦闘をシミュレーションする
+     * @param {Player} player - プレイヤーオブジェクト
+     * @param {Monster} monster - モンスターオブジェクト
+     * @returns {Object} 戦闘シミュレーション結果
+     */
+    static simulateBattle(player, monster) {
+        const log = [];
+        let turns = 0;
+        const maxTurns = 100; // 無限ループ防止
+        
+        while (turns < maxTurns) {
+            turns++;
+            
+            // プレイヤーの攻撃
+            const playerAttackResult = this.playerAttack(player, monster);
+            log.push(`Turn ${turns}: Player attacks for ${playerAttackResult.damage} damage. Monster HP: ${playerAttackResult.targetHp}`);
+            
+            const battleResult = this.checkBattleResult(player, monster);
+            if (battleResult.isOver) {
+                return {
+                    ...battleResult,
+                    turns: turns,
+                    log: log
+                };
+            }
+            
+            // モンスターの攻撃
+            const monsterAttackResult = this.monsterAttack(monster, player);
+            log.push(`Turn ${turns}: Monster attacks for ${monsterAttackResult.damage} damage. Player HP: ${monsterAttackResult.targetHp}`);
+            
+            const battleResult2 = this.checkBattleResult(player, monster);
+            if (battleResult2.isOver) {
+                return {
+                    ...battleResult2,
+                    turns: turns,
+                    log: log
+                };
+            }
+        }
+        
+        // 最大ターン数に達した場合（引き分け扱い）
+        return {
+            isOver: true,
+            winner: null,
+            experienceGained: 0,
+            goldGained: 0,
+            turns: turns,
+            log: log
+        };
+    }
+}
+
+module.exports = CombatSystem;
