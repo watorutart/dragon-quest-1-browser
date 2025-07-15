@@ -26,11 +26,3 @@ global.requestAnimationFrame = jest.fn((callback) => {
 global.performance = {
     now: jest.fn(() => Date.now())
 };
-
-// console.logを抑制（必要に応じて）
-// global.console = {
-//     ...console,
-//     log: jest.fn(),
-//     error: jest.fn(),
-//     warn: jest.fn()
-// };

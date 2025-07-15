@@ -272,6 +272,117 @@ class Player {
         // レベルアップ時にHPを全回復
         this.hp = this.maxHp;
     }
+    
+    // === 移動システム ===
+    
+    /**
+     * 指定方向に移動する
+     * Requirements: 1.1, 1.2, 1.3, 1.4 - プレイヤーの移動処理
+     * 
+     * @param {string} direction - 移動方向 ('up', 'down', 'left', 'right')
+     * @param {Object} map - マップオブジェクト（コリジョン検出用）
+     * @returns {Object} 移動結果 {success, direction, oldPosition, newPosition}
+     */
+    move(direction, map) {
+        const oldPosition = this.getPosition();
+        const newPosition = this._calculateNewPosition(direction);
+        
+        // 移動可能性をチェック
+        if (!this._isValidMove(newPosition, map)) {
+            return this._createMoveResult(false, direction, oldPosition, oldPosition);
+        }
+        
+        // 移動を実行
+        this.setPosition(newPosition.x, newPosition.y);
+        
+        return this._createMoveResult(true, direction, oldPosition, this.getPosition());
+    }
+    
+    /**
+     * 指定方向に移動可能かチェック
+     * @param {string} direction - 移動方向
+     * @param {Object} map - マップオブジェクト
+     * @returns {boolean} 移動可能な場合true
+     */
+    canMoveInDirection(direction, map) {
+        const newPosition = this._calculateNewPosition(direction);
+        return this._isValidMove(newPosition, map);
+    }
+    
+    /**
+     * 移動結果オブジェクトを作成
+     * @private
+     * @param {boolean} success - 移動成功フラグ
+     * @param {string} direction - 移動方向
+     * @param {Object} oldPosition - 移動前の位置
+     * @param {Object} newPosition - 移動後の位置
+     * @returns {Object} 移動結果オブジェクト
+     */
+    _createMoveResult(success, direction, oldPosition, newPosition) {
+        return {
+            success: success,
+            direction: direction,
+            oldPosition: oldPosition,
+            newPosition: newPosition
+        };
+    }
+    
+    /**
+     * 指定方向の新しい座標を計算
+     * @private
+     * @param {string} direction - 移動方向
+     * @returns {Object} 新しい座標 {x, y}
+     */
+    _calculateNewPosition(direction) {
+        const currentPos = this.getPosition();
+        const directionMap = this._getDirectionMap();
+        
+        const delta = directionMap[direction];
+        if (!delta) {
+            return currentPos; // 無効な方向の場合は現在位置を返す
+        }
+        
+        return {
+            x: currentPos.x + delta.x,
+            y: currentPos.y + delta.y
+        };
+    }
+    
+    /**
+     * 方向と座標変化のマッピングを取得
+     * @private
+     * @returns {Object} 方向マッピング
+     */
+    _getDirectionMap() {
+        return {
+            'up': { x: 0, y: -1 },
+            'down': { x: 0, y: 1 },
+            'left': { x: -1, y: 0 },
+            'right': { x: 1, y: 0 }
+        };
+    }
+    
+    /**
+     * 移動が有効かチェック
+     * @private
+     * @param {Object} position - チェックする座標 {x, y}
+     * @param {Object} map - マップオブジェクト
+     * @returns {boolean} 移動可能な場合true
+     */
+    _isValidMove(position, map) {
+        // 座標の有効性チェック（境界チェック）
+        if (!this.isValidPosition(position.x, position.y)) {
+            return false;
+        }
+        
+        // マップのコリジョンチェック（地形・障害物チェック）
+        if (map && typeof map.isWalkable === 'function') {
+            return map.isWalkable(position.x, position.y);
+        }
+        
+        // マップが提供されていない場合は座標の有効性のみチェック
+        return true;
+    }
 }
 
 // Node.js環境でのエクスポート（テスト用）

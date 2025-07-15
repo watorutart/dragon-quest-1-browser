@@ -262,4 +262,161 @@ describe('Player のレベルアップ機能', () => {
             expect(player.level).toBeLessThanOrEqual(30);
         });
     });
+});describe(
+'Player の移動ロジック', () => {
+    let player;
+    let mockMap;
+    
+    beforeEach(() => {
+        player = new Player();
+        // Map クラスのモック
+        mockMap = {
+            isWalkable: jest.fn(),
+            width: 120,
+            height: 120
+        };
+    });
+    
+    describe('移動処理テスト (RED)', () => {
+        test('上方向に移動できる', () => {
+            mockMap.isWalkable.mockReturnValue(true);
+            player.setPosition(10, 10);
+            
+            const result = player.move('up', mockMap);
+            
+            expect(result.success).toBe(true);
+            expect(player.getY()).toBe(9);
+            expect(player.getX()).toBe(10); // X座標は変化しない
+        });
+        
+        test('下方向に移動できる', () => {
+            mockMap.isWalkable.mockReturnValue(true);
+            player.setPosition(10, 10);
+            
+            const result = player.move('down', mockMap);
+            
+            expect(result.success).toBe(true);
+            expect(player.getY()).toBe(11);
+            expect(player.getX()).toBe(10);
+        });
+        
+        test('左方向に移動できる', () => {
+            mockMap.isWalkable.mockReturnValue(true);
+            player.setPosition(10, 10);
+            
+            const result = player.move('left', mockMap);
+            
+            expect(result.success).toBe(true);
+            expect(player.getX()).toBe(9);
+            expect(player.getY()).toBe(10);
+        });
+        
+        test('右方向に移動できる', () => {
+            mockMap.isWalkable.mockReturnValue(true);
+            player.setPosition(10, 10);
+            
+            const result = player.move('right', mockMap);
+            
+            expect(result.success).toBe(true);
+            expect(player.getX()).toBe(11);
+            expect(player.getY()).toBe(10);
+        });
+        
+        test('無効な方向では移動しない', () => {
+            player.setPosition(10, 10);
+            
+            const result = player.move('invalid', mockMap);
+            
+            expect(result.success).toBe(false);
+            expect(player.getX()).toBe(10);
+            expect(player.getY()).toBe(10);
+        });
+        
+        test('移動先がコリジョンの場合は移動しない', () => {
+            mockMap.isWalkable.mockReturnValue(false);
+            player.setPosition(10, 10);
+            
+            const result = player.move('up', mockMap);
+            
+            expect(result.success).toBe(false);
+            expect(player.getX()).toBe(10);
+            expect(player.getY()).toBe(10);
+        });
+        
+        test('マップ境界外への移動は拒否される', () => {
+            mockMap.isWalkable.mockReturnValue(false); // 境界外は移動不可
+            player.setPosition(0, 0);
+            
+            const result = player.move('up', mockMap);
+            
+            expect(result.success).toBe(false);
+            expect(player.getX()).toBe(0);
+            expect(player.getY()).toBe(0);
+        });
+        
+        test('移動時にマップのisWalkableが正しい座標で呼ばれる', () => {
+            mockMap.isWalkable.mockReturnValue(true);
+            player.setPosition(5, 5);
+            
+            player.move('up', mockMap);
+            
+            expect(mockMap.isWalkable).toHaveBeenCalledWith(5, 4);
+        });
+    });
+    
+    describe('移動検証ロジック統合テスト (RED)', () => {
+        test('移動可能性を事前にチェックできる', () => {
+            mockMap.isWalkable.mockReturnValue(true);
+            player.setPosition(10, 10);
+            
+            expect(player.canMoveInDirection('up', mockMap)).toBe(true);
+            expect(player.canMoveInDirection('down', mockMap)).toBe(true);
+            expect(player.canMoveInDirection('left', mockMap)).toBe(true);
+            expect(player.canMoveInDirection('right', mockMap)).toBe(true);
+        });
+        
+        test('コリジョンがある場合は移動不可と判定される', () => {
+            mockMap.isWalkable.mockReturnValue(false);
+            player.setPosition(10, 10);
+            
+            expect(player.canMoveInDirection('up', mockMap)).toBe(false);
+        });
+        
+        test('移動結果に詳細情報が含まれる', () => {
+            mockMap.isWalkable.mockReturnValue(true);
+            player.setPosition(10, 10);
+            
+            const result = player.move('up', mockMap);
+            
+            expect(result).toHaveProperty('success');
+            expect(result).toHaveProperty('direction');
+            expect(result).toHaveProperty('oldPosition');
+            expect(result).toHaveProperty('newPosition');
+            expect(result.direction).toBe('up');
+            expect(result.oldPosition).toEqual({x: 10, y: 10});
+            expect(result.newPosition).toEqual({x: 10, y: 9});
+        });
+        
+        test('移動失敗時の結果情報が正しい', () => {
+            mockMap.isWalkable.mockReturnValue(false);
+            player.setPosition(10, 10);
+            
+            const result = player.move('up', mockMap);
+            
+            expect(result.success).toBe(false);
+            expect(result.oldPosition).toEqual({x: 10, y: 10});
+            expect(result.newPosition).toEqual({x: 10, y: 10}); // 移動していない
+        });
+        
+        test('連続移動が正しく処理される', () => {
+            mockMap.isWalkable.mockReturnValue(true);
+            player.setPosition(10, 10);
+            
+            player.move('up', mockMap);
+            player.move('right', mockMap);
+            
+            expect(player.getX()).toBe(11);
+            expect(player.getY()).toBe(9);
+        });
+    });
 });
