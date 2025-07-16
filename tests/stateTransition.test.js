@@ -187,6 +187,114 @@ describe('StateTransition System', () => {
                 type: 'encounter'
             });
         });
+
+        test('イベントリスナーの登録と削除が正しく動作する', () => {
+            const stateManager = new StateManager();
+            const mockCallback1 = jest.fn();
+            const mockCallback2 = jest.fn();
+            
+            // リスナーを登録
+            stateManager.onStateChange(mockCallback1);
+            stateManager.onStateChange(mockCallback2);
+            
+            // 状態変更
+            stateManager._setState('menu');
+            
+            // 両方のリスナーが呼ばれることを確認
+            expect(mockCallback1).toHaveBeenCalled();
+            expect(mockCallback2).toHaveBeenCalled();
+            
+            // 1つのリスナーを削除
+            stateManager.offStateChange(mockCallback1);
+            mockCallback1.mockClear();
+            mockCallback2.mockClear();
+            
+            // 再度状態変更
+            stateManager._setState('field');
+            
+            // 削除されたリスナーは呼ばれず、残ったリスナーは呼ばれる
+            expect(mockCallback1).not.toHaveBeenCalled();
+            expect(mockCallback2).toHaveBeenCalled();
+        });
+
+        test('リスナーでエラーが発生しても他のリスナーは実行される', () => {
+            const stateManager = new StateManager();
+            const errorCallback = jest.fn(() => {
+                throw new Error('Test error');
+            });
+            const normalCallback = jest.fn();
+            
+            // エラーを起こすリスナーと正常なリスナーを登録
+            stateManager.onStateChange(errorCallback);
+            stateManager.onStateChange(normalCallback);
+            
+            // コンソールエラーをモック
+            const consoleSpy = jest.spyOn(console, 'error').mockImplementation();
+            
+            // 状態変更
+            stateManager._setState('menu');
+            
+            // エラーが発生したリスナーも正常なリスナーも呼ばれる
+            expect(errorCallback).toHaveBeenCalled();
+            expect(normalCallback).toHaveBeenCalled();
+            expect(consoleSpy).toHaveBeenCalledWith('State change listener error:', expect.any(Error));
+            
+            consoleSpy.mockRestore();
+        });
+    });
+
+    describe('対話状態遷移', () => {
+        test('フィールド状態から対話状態に遷移する', () => {
+            const stateManager = new StateManager();
+            
+            // 初期状態はフィールド
+            expect(stateManager.getCurrentState()).toBe('field');
+            
+            // 対話開始をシミュレート
+            stateManager._setState('dialog');
+            
+            // 対話状態に遷移したことを確認
+            expect(stateManager.getCurrentState()).toBe('dialog');
+        });
+
+        test('対話状態からフィールド状態に戻る', () => {
+            const stateManager = new StateManager();
+            
+            // 対話状態に設定
+            stateManager._setState('dialog');
+            expect(stateManager.getCurrentState()).toBe('dialog');
+            
+            // フィールド状態に戻る
+            stateManager._setState('field');
+            expect(stateManager.getCurrentState()).toBe('field');
+        });
+    });
+
+    describe('メニュー状態遷移', () => {
+        test('フィールド状態からメニュー状態に遷移する', () => {
+            const stateManager = new StateManager();
+            
+            // 初期状態はフィールド
+            expect(stateManager.getCurrentState()).toBe('field');
+            
+            // メニュー開始をシミュレート
+            stateManager._setState('menu');
+            
+            // メニュー状態に遷移したことを確認
+            expect(stateManager.getCurrentState()).toBe('menu');
+        });
+
+        test('メニュー状態からフィールド状態に戻る', () => {
+            const stateManager = new StateManager();
+            
+            // メニュー状態に設定
+            stateManager._setState('menu');
+            expect(stateManager.getCurrentState()).toBe('menu');
+            
+            // フィールド状態に戻る
+            stateManager._setState('field');
+            expect(stateManager.getCurrentState()).toBe('field');
+        });
     });
 
     describe('統合テスト - プレイヤー移動とエンカウント', () => {

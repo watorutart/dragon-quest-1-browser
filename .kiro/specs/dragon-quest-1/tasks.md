@@ -134,14 +134,14 @@
   - 購入フローの改善（Refactor）
   - _Requirements: 5.1, 5.3, 5.5_
 
-- [ ] 10. ゲーム状態管理システムの TDD 実装
-- [ ] 10.1 StateManager をテスト駆動で実装
+- [x] 10. ゲーム状態管理システムの TDD 実装
+- [x] 10.1 StateManager をテスト駆動で実装
   - 状態遷移のテストを作成（Red）
   - StateManager クラスの実装（Green）
   - 状態管理の抽象化（Refactor）
   - _Requirements: 1.1, 2.1, 4.1, 4.4_
 
-- [ ] 10.2 FieldState をテスト駆動で実装
+- [x] 10.2 FieldState をテスト駆動で実装
   - フィールド状態のテストを作成（Red）
   - FieldState クラスの実装（Green）
   - フィールドロジックの統合（Refactor）

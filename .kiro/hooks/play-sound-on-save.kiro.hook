@@ -1,0 +1,22 @@
+{
+  "enabled": true,
+  "name": "ファイル保存時に音を鳴らす",
+  "description": "ファイルを保存した時に成功音を再生します",
+  "version": "1",
+  "when": {
+    "type": "fileEdited",
+    "patterns": [
+      "**/*.js",
+      "**/*.ts",
+      "**/*.jsx",
+      "**/*.tsx",
+      "**/*.css",
+      "**/*.html",
+      "**/*.md"
+    ]
+  },
+  "then": {
+    "type": "askAgent",
+    "prompt": "Execute the system command: afplay /System/Library/Sounds/Glass.aiff & to play a success sound when a file is saved"
+  }
+}

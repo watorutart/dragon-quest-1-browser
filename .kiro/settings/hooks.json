@@ -5,12 +5,26 @@
       "name": "ファイル保存時に音を鳴らす",
       "description": "ファイルを保存した時に成功音を再生します",
       "trigger": {
-        "type": "file-save",
+        "type": "file-saved",
         "pattern": "**/*.{js,ts,jsx,tsx,css,html,md}"
       },
       "action": {
         "type": "system-command",
-        "command": "afplay /System/Library/Sounds/Glass.aiff"
+        "command": "afplay /System/Library/Sounds/Glass.aiff &"
+      },
+      "enabled": true
+    },
+    {
+      "id": "play-sound-on-save-alt",
+      "name": "ファイル保存時に音を鳴らす（代替）",
+      "description": "ファイルを保存した時に成功音を再生します（代替トリガー）",
+      "trigger": {
+        "type": "save",
+        "pattern": "**/*.{js,ts,jsx,tsx,css,html,md}"
+      },
+      "action": {
+        "type": "system-command",
+        "command": "afplay /System/Library/Sounds/Tink.aiff &"
       },
       "enabled": true
     },
@@ -23,7 +37,7 @@
       },
       "action": {
         "type": "system-command",
-        "command": "afplay /System/Library/Sounds/Ping.aiff"
+        "command": "afplay /System/Library/Sounds/Ping.aiff &"
       },
       "enabled": true
     },
@@ -36,7 +50,7 @@
       },
       "action": {
         "type": "system-command",
-        "command": "afplay /System/Library/Sounds/Sosumi.aiff"
+        "command": "afplay /System/Library/Sounds/Sosumi.aiff &"
       },
       "enabled": true
     },
@@ -49,7 +63,47 @@
       },
       "action": {
         "type": "system-command",
-        "command": "afplay /System/Library/Sounds/Funk.aiff"
+        "command": "afplay /System/Library/Sounds/Funk.aiff &"
+      },
+      "enabled": true
+    },
+    {
+      "id": "debug-hook",
+      "name": "デバッグ用フック",
+      "description": "フックが動作しているかテストするためのログ出力",
+      "trigger": {
+        "type": "file-save",
+        "pattern": "**/*.js"
+      },
+      "action": {
+        "type": "system-command",
+        "command": "echo 'Hook triggered at' $(date) >> /tmp/kiro-hook-debug.log"
+      },
+      "enabled": true
+    },
+    {
+      "id": "simple-test-hook",
+      "name": "シンプルテストフック",
+      "description": "最もシンプルなフックテスト",
+      "trigger": {
+        "type": "*"
+      },
+      "action": {
+        "type": "system-command",
+        "command": "afplay /System/Library/Sounds/Ping.aiff"
+      },
+      "enabled": true
+    },
+    {
+      "id": "follow-instructions-hook",
+      "name": "タスク完了時指示実行フック",
+      "description": "タスク完了時に自動で「I will follow these instructions.」を実行するフック",
+      "trigger": {
+        "type": "task-complete"
+      },
+      "action": {
+        "type": "agent-execution",
+        "prompt": "I will follow these instructions."
       },
       "enabled": true
     }
