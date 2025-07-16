@@ -2,9 +2,10 @@
  * BattleState クラス - 戦闘状態管理システム
  */
 
-// ブラウザ環境では他のスクリプトファイルから直接参照
-if (typeof module !== 'undefined' && module.exports) {
-    module.exports = BattleState;
+// CombatSystem依存性を解決
+let CombatSystem;
+if (typeof require !== 'undefined') {
+    CombatSystem = require('./combatSystem');
 }
 
 class BattleState {
@@ -171,3 +172,6 @@ class BattleState {
 }
 
 // ブラウザ環境ではグローバルスコープで利用可能
+if (typeof module !== 'undefined' && module.exports) {
+    module.exports = BattleState;
+}
