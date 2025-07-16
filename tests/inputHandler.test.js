@@ -1,4 +1,4 @@
-const { InputHandler } = require('../src/inputHandler.js');
+const InputHandler = require('../src/inputHandler.js');
 
 describe('InputHandler', () => {
   let inputHandler;
