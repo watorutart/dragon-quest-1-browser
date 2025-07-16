@@ -273,6 +273,191 @@ class Player {
         this.hp = this.maxHp;
     }
     
+    // === 装備システム ===
+    
+    /**
+     * 武器を装備する
+     * Requirements: 5.2, 5.4 - 装備変更とステータス反映
+     * 
+     * @param {Item} item - 装備する武器アイテム
+     * @returns {Object} 装備結果 {success, previousWeapon, error}
+     */
+    equipWeapon(item) {
+        const validation = this._validateEquipmentItem(item, 'weapon');
+        if (!validation.valid) {
+            return { success: false, error: validation.error };
+        }
+        
+        const previousWeapon = this.weapon;
+        
+        // 既存の武器の効果を除去
+        this._removeEquipmentStats(previousWeapon, 'attack');
+        
+        // 新しい武器を装備
+        this.weapon = item;
+        this._applyEquipmentStats(item, 'attack');
+        
+        return {
+            success: true,
+            previousWeapon: previousWeapon
+        };
+    }
+    
+    /**
+     * 防具を装備する
+     * Requirements: 5.2, 5.4 - 装備変更とステータス反映
+     * 
+     * @param {Item} item - 装備する防具アイテム
+     * @returns {Object} 装備結果 {success, previousArmor, error}
+     */
+    equipArmor(item) {
+        const validation = this._validateEquipmentItem(item, 'armor');
+        if (!validation.valid) {
+            return { success: false, error: validation.error };
+        }
+        
+        const previousArmor = this.armor;
+        
+        // 既存の防具の効果を除去
+        this._removeEquipmentStats(previousArmor, 'defense');
+        
+        // 新しい防具を装備
+        this.armor = item;
+        this._applyEquipmentStats(item, 'defense');
+        
+        return {
+            success: true,
+            previousArmor: previousArmor
+        };
+    }
+    
+    /**
+     * 武器を外す
+     * Requirements: 5.2, 5.4 - 装備変更とステータス反映
+     * 
+     * @returns {Object} 装備解除結果 {success, unequippedWeapon, error}
+     */
+    unequipWeapon() {
+        if (!this.weapon) {
+            return { success: false, error: 'No weapon equipped' };
+        }
+        
+        const unequippedWeapon = this.weapon;
+        this.attack -= unequippedWeapon.getStatBonus('attack');
+        this.weapon = null;
+        
+        return {
+            success: true,
+            unequippedWeapon: unequippedWeapon
+        };
+    }
+    
+    /**
+     * 防具を外す
+     * Requirements: 5.2, 5.4 - 装備変更とステータス反映
+     * 
+     * @returns {Object} 装備解除結果 {success, unequippedArmor, error}
+     */
+    unequipArmor() {
+        if (!this.armor) {
+            return { success: false, error: 'No armor equipped' };
+        }
+        
+        const unequippedArmor = this.armor;
+        this.defense -= unequippedArmor.getStatBonus('defense');
+        this.armor = null;
+        
+        return {
+            success: true,
+            unequippedArmor: unequippedArmor
+        };
+    }
+    
+    /**
+     * 装備込みの総攻撃力を取得
+     * Requirements: 5.2, 5.4 - ステータス反映システム
+     * 
+     * @returns {number} 総攻撃力
+     */
+    getTotalAttack() {
+        return this.attack;
+    }
+    
+    /**
+     * 装備込みの総防御力を取得
+     * Requirements: 5.2, 5.4 - ステータス反映システム
+     * 
+     * @returns {number} 総防御力
+     */
+    getTotalDefense() {
+        return this.defense;
+    }
+    
+    /**
+     * 装備情報を取得
+     * Requirements: 5.2, 5.4 - 装備管理ロジック
+     * 
+     * @returns {Object} 装備情報 {weapon, armor, totalAttackBonus, totalDefenseBonus}
+     */
+    getEquipmentInfo() {
+        const weaponBonus = this.weapon ? this.weapon.getStatBonus('attack') : 0;
+        const armorBonus = this.armor ? this.armor.getStatBonus('defense') : 0;
+        
+        return {
+            weapon: this.weapon,
+            armor: this.armor,
+            totalAttackBonus: weaponBonus,
+            totalDefenseBonus: armorBonus
+        };
+    }
+    
+    /**
+     * 装備アイテムの検証
+     * @private
+     * @param {Item} item - 検証するアイテム
+     * @param {string} expectedType - 期待するアイテムタイプ
+     * @returns {Object} 検証結果 {valid: boolean, error?: string}
+     */
+    _validateEquipmentItem(item, expectedType) {
+        if (!item) {
+            return { valid: false, error: 'Invalid item' };
+        }
+        
+        if (expectedType === 'weapon' && !item.isWeapon()) {
+            return { valid: false, error: 'Item is not a weapon' };
+        }
+        
+        if (expectedType === 'armor' && !item.isArmor()) {
+            return { valid: false, error: 'Item is not armor' };
+        }
+        
+        return { valid: true };
+    }
+    
+    /**
+     * 装備のステータス効果を適用
+     * @private
+     * @param {Item} item - 装備アイテム
+     * @param {string} statType - ステータスタイプ ('attack' or 'defense')
+     */
+    _applyEquipmentStats(item, statType) {
+        if (item && typeof item.getStatBonus === 'function') {
+            this[statType] += item.getStatBonus(statType);
+        }
+    }
+    
+    /**
+     * 装備のステータス効果を除去
+     * @private
+     * @param {Item} item - 装備アイテム
+     * @param {string} statType - ステータスタイプ ('attack' or 'defense')
+     */
+    _removeEquipmentStats(item, statType) {
+        if (item && typeof item.getStatBonus === 'function') {
+            this[statType] -= item.getStatBonus(statType);
+        }
+    }
+    
     // === 移動システム ===
     
     /**
