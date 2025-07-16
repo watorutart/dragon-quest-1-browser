@@ -2,7 +2,10 @@
  * BattleState クラス - 戦闘状態管理システム
  */
 
-const CombatSystem = require('./combatSystem.js');
+// ブラウザ環境では他のスクリプトファイルから直接参照
+if (typeof module !== 'undefined' && module.exports) {
+    module.exports = BattleState;
+}
 
 class BattleState {
     /**
@@ -167,4 +170,4 @@ class BattleState {
     }
 }
 
-module.exports = BattleState;
+// ブラウザ環境ではグローバルスコープで利用可能

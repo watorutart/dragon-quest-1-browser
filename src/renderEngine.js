@@ -25,6 +25,49 @@ class RenderEngine {
     }
 
     /**
+     * 基本的な描画テスト - デバッグ用
+     */
+    testDraw(playerX = 10, playerY = 10) {
+        // 背景をクリア
+        this.context.fillStyle = '#002200';
+        this.context.fillRect(0, 0, this.width, this.height);
+        
+        // テスト用のグリッドを描画
+        this.context.strokeStyle = '#004400';
+        this.context.lineWidth = 1;
+        
+        // 縦線
+        for (let x = 0; x < this.width; x += 32) {
+            this.context.beginPath();
+            this.context.moveTo(x, 0);
+            this.context.lineTo(x, this.height);
+            this.context.stroke();
+        }
+        
+        // 横線
+        for (let y = 0; y < this.height; y += 32) {
+            this.context.beginPath();
+            this.context.moveTo(0, y);
+            this.context.lineTo(this.width, y);
+            this.context.stroke();
+        }
+        
+        // テスト用のプレイヤー位置
+        this.context.fillStyle = '#ffff00';
+        this.context.fillRect(playerX * 32, playerY * 32, 32, 32);
+        
+        // テスト用のテキスト
+        this.context.fillStyle = '#ffffff';
+        this.context.font = '16px monospace';
+        this.context.fillText('Dragon Quest 1 - Test Mode', 10, 30);
+        
+        // 操作説明
+        this.context.fillStyle = '#cccccc';
+        this.context.font = '12px monospace';
+        this.context.fillText('Use arrow keys or WASD to move', 10, 50);
+    }
+
+    /**
      * 描画統計をリセット
      */
     resetStats() {
@@ -351,4 +394,7 @@ class RenderEngine {
     }
 }
 
-module.exports = RenderEngine;
+// ブラウザ環境ではグローバルスコープで利用可能
+if (typeof module !== 'undefined' && module.exports) {
+    module.exports = RenderEngine;
+}

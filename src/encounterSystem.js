@@ -54,4 +54,7 @@ class EncounterSystem {
     }
 }
 
-module.exports = EncounterSystem;
+// ブラウザ環境ではグローバルスコープで利用可能
+if (typeof module !== 'undefined' && module.exports) {
+    module.exports = EncounterSystem;
+}

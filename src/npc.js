@@ -89,4 +89,7 @@ class NPC {
   }
 }
 
-module.exports = NPC;
+// ブラウザ環境ではグローバルスコープで利用可能
+if (typeof module !== 'undefined' && module.exports) {
+    module.exports = NPC;
+}

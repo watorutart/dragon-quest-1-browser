@@ -3,7 +3,7 @@
  * フィールド、戦闘、メニューなどの状態遷移を管理
  */
 
-const BattleState = require('./battleState.js');
+// ブラウザ環境では他のスクリプトファイルから直接参照
 
 // 状態定数
 const GAME_STATES = {
@@ -212,7 +212,7 @@ class StateManager {
      */
     _handleEncounterTransition(data) {
         // プレイヤーは外部から注入される想定だが、テストのため仮実装
-        const Player = require('./player.js');
+        // ブラウザ環境ではPlayerクラスは既に利用可能
         const player = new Player();
         
         this.battleState = new BattleState(player, data.monster);
@@ -255,6 +255,22 @@ class StateManager {
     }
 
     /**
+     * 状態オブジェクトを設定する（初期化用）
+     * @param {Object} stateObject - 状態オブジェクト
+     */
+    setState(stateObject) {
+        if (stateObject instanceof FieldState) {
+            this.fieldState = stateObject;
+            this.currentState = GAME_STATES.FIELD;
+        } else if (stateObject instanceof BattleState) {
+            this.battleState = stateObject;
+            this.currentState = GAME_STATES.BATTLE;
+        } else {
+            throw new Error('Invalid state object type');
+        }
+    }
+
+    /**
      * 状態を強制的に設定する（デバッグ用）
      * @param {string} state - 設定する状態
      */
@@ -270,4 +286,7 @@ class StateManager {
     }
 }
 
-module.exports = StateManager;
+// ブラウザ環境ではグローバルスコープで利用可能
+if (typeof module !== 'undefined' && module.exports) {
+    module.exports = StateManager;
+}

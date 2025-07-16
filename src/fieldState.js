@@ -3,8 +3,7 @@
  * プレイヤーの移動、エンカウント処理、入力処理を管理
  */
 
-const { InputHandler } = require('./inputHandler.js');
-const EncounterSystem = require('./encounterSystem.js');
+// ブラウザ環境では他のスクリプトファイルから直接参照
 
 // 定数定義
 const FIELD_CONFIG = {
@@ -233,4 +232,7 @@ class FieldState {
     }
 }
 
-module.exports = FieldState;
+// ブラウザ環境ではグローバルスコープで利用可能
+if (typeof module !== 'undefined' && module.exports) {
+    module.exports = FieldState;
+}

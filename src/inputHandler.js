@@ -8,9 +8,11 @@
  */
 class InputHandler {
     constructor() {
-        this.keys = new Map();
+        this.keys = {};
         this.lastPressedKey = null;
         this.movementCallback = null;
+        this.onKeyDown = null;
+        this.onKeyUp = null;
         
         // 移動キーのマッピング（拡張しやすい構造）
         this.movementKeys = this._createMovementKeyMap();
@@ -59,7 +61,12 @@ class InputHandler {
      */
     handleKeyDown(event) {
         const key = event.key;
-        this.keys.set(key, true);
+        this.keys[key] = true;
+        
+        // 汎用キーダウンコールバック
+        if (this.onKeyDown) {
+            this.onKeyDown(key);
+        }
         
         // 移動キーの場合、最後に押されたキーとして記録
         if (this.movementKeys[key]) {
@@ -78,7 +85,12 @@ class InputHandler {
      */
     handleKeyUp(event) {
         const key = event.key;
-        this.keys.set(key, false);
+        this.keys[key] = false;
+        
+        // 汎用キーアップコールバック
+        if (this.onKeyUp) {
+            this.onKeyUp(key);
+        }
         
         // 最後に押されたキーが離された場合はクリア
         if (this.lastPressedKey === key) {
@@ -92,7 +104,7 @@ class InputHandler {
      * @returns {boolean}
      */
     isKeyPressed(key) {
-        return this.keys.get(key) || false;
+        return this.keys[key] || false;
     }
     
     /**
@@ -100,7 +112,7 @@ class InputHandler {
      * @returns {string|null} 'up', 'down', 'left', 'right', または null
      */
     getMovementDirection() {
-        if (this.lastPressedKey && this.keys.get(this.lastPressedKey)) {
+        if (this.lastPressedKey && this.keys[this.lastPressedKey]) {
             return this.movementKeys[this.lastPressedKey];
         }
         return null;
@@ -118,7 +130,23 @@ class InputHandler {
      * キー状態をリセット
      */
     reset() {
-        this.keys.clear();
+        this.keys = {};
+        this.lastPressedKey = null;
+    }
+    
+    /**
+     * 入力ハンドラーを有効化
+     */
+    enable() {
+        // 既にイベントリスナーが登録されているため、特別な処理は不要
+        // 将来的に無効化機能を追加する場合に備えて空のメソッドを提供
+    }
+    
+    /**
+     * 入力ハンドラーを無効化
+     */
+    disable() {
+        this.keys = {};
         this.lastPressedKey = null;
     }
     
@@ -128,10 +156,13 @@ class InputHandler {
     cleanup() {
         document.removeEventListener('keydown', this.handleKeyDown);
         document.removeEventListener('keyup', this.handleKeyUp);
-        this.keys.clear();
+        this.keys = {};
         this.lastPressedKey = null;
         this.movementCallback = null;
     }
 }
 
-module.exports = { InputHandler };
+// ブラウザ環境ではグローバルスコープで利用可能
+if (typeof module !== 'undefined' && module.exports) {
+    module.exports = InputHandler;
+}

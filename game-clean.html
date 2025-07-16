@@ -1,0 +1,312 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ドラゴンクエスト1 - クリーン版</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 20px;
+            background: #000;
+            color: #fff;
+            font-family: monospace;
+        }
+        #game-container {
+            text-align: center;
+        }
+        canvas {
+            border: 2px solid #fff;
+            background: #006600;
+        }
+        #ui {
+            margin-top: 10px;
+            background: #333;
+            padding: 10px;
+            border-radius: 5px;
+        }
+        #message {
+            height: 60px;
+            background: #222;
+            padding: 10px;
+            margin-top: 10px;
+            border-radius: 5px;
+            overflow-y: auto;
+        }
+    </style>
+</head>
+<body>
+    <div id="game-container">
+        <h1>ドラゴンクエスト1</h1>
+        <canvas id="game-canvas" width="400" height="300"></canvas>
+        <div id="ui">
+            <div id="player-stats">
+                <span id="player-level">Lv: 1</span> | 
+                <span id="player-hp">HP: 15/15</span> | 
+                <span id="player-gold">G: 120</span> |
+                <span id="player-exp">EXP: 0</span>
+            </div>
+            <div id="controls">
+                矢印キーまたはWASDで移動 | Spaceで攻撃 | Escでメニュー
+            </div>
+        </div>
+        <div id="message">ゲーム開始！移動してみてください。</div>
+    </div>
+
+    <script>
+        // プレイヤークラス
+        class Player {
+            constructor() {
+                this.x = 200;
+                this.y = 150;
+                this.level = 1;
+                this.hp = 15;
+                this.maxHp = 15;
+                this.gold = 120;
+                this.exp = 0;
+                this.expToNext = 10;
+                this.speed = 2;
+                this.inBattle = false;
+            }
+            
+            move(dx, dy) {
+                if (this.inBattle) return;
+                
+                this.x += dx * this.speed;
+                this.y += dy * this.speed;
+                
+                // 画面境界チェック
+                this.x = Math.max(10, Math.min(390, this.x));
+                this.y = Math.max(10, Math.min(290, this.y));
+                
+                // ランダムエンカウント（5%の確率）
+                if (Math.random() < 0.05) {
+                    this.startBattle();
+                }
+            }
+            
+            startBattle() {
+                this.inBattle = true;
+                const monster = new Monster();
+                game.currentMonster = monster;
+                game.addMessage(`${monster.name}が現れた！`);
+                game.addMessage('Spaceで攻撃、Escで逃走');
+            }
+            
+            attack(monster) {
+                const damage = Math.floor(Math.random() * 8) + 3;
+                monster.hp -= damage;
+                game.addMessage(`${damage}のダメージを与えた！`);
+                
+                if (monster.hp <= 0) {
+                    this.winBattle(monster);
+                } else {
+                    // モンスターの反撃
+                    setTimeout(() => monster.attack(this), 1000);
+                }
+            }
+            
+            winBattle(monster) {
+                this.inBattle = false;
+                this.exp += monster.exp;
+                this.gold += monster.gold;
+                game.addMessage(`${monster.name}を倒した！`);
+                game.addMessage(`${monster.exp}の経験値と${monster.gold}ゴールドを得た！`);
+                
+                if (this.exp >= this.expToNext) {
+                    this.levelUp();
+                }
+                
+                game.currentMonster = null;
+            }
+            
+            levelUp() {
+                this.level++;
+                this.exp -= this.expToNext;
+                this.expToNext = this.level * 10;
+                const hpIncrease = Math.floor(Math.random() * 5) + 3;
+                this.maxHp += hpIncrease;
+                this.hp = this.maxHp;
+                game.addMessage(`レベルアップ！ Lv.${this.level}になった！`);
+                game.addMessage(`HPが${hpIncrease}上がった！`);
+            }
+            
+            takeDamage(damage) {
+                this.hp -= damage;
+                if (this.hp <= 0) {
+                    this.hp = 0;
+                    game.addMessage('あなたは死んでしまった...');
+                    // ゲームオーバー処理
+                    setTimeout(() => {
+                        this.hp = this.maxHp;
+                        this.gold = Math.floor(this.gold / 2);
+                        this.inBattle = false;
+                        game.currentMonster = null;
+                        game.addMessage('復活した！ゴールドが半分になった...');
+                    }, 2000);
+                }
+            }
+            
+            flee() {
+                if (Math.random() < 0.7) {
+                    this.inBattle = false;
+                    game.currentMonster = null;
+                    game.addMessage('うまく逃げ切れた！');
+                } else {
+                    game.addMessage('逃げられなかった！');
+                    setTimeout(() => game.currentMonster.attack(this), 1000);
+                }
+            }
+        }
+        
+        // モンスタークラス
+        class Monster {
+            constructor() {
+                const monsters = [
+                    { name: 'スライム', hp: 8, attack: 3, exp: 2, gold: 5 },
+                    { name: 'ドラキー', hp: 6, attack: 4, exp: 3, gold: 8 },
+                    { name: 'おおきづち', hp: 12, attack: 6, exp: 5, gold: 12 }
+                ];
+                
+                const monster = monsters[Math.floor(Math.random() * monsters.length)];
+                this.name = monster.name;
+                this.hp = monster.hp;
+                this.maxHp = monster.hp;
+                this.attackPower = monster.attack;
+                this.exp = monster.exp;
+                this.gold = monster.gold;
+            }
+            
+            attack(player) {
+                if (!game.player.inBattle) return;
+                
+                const damage = Math.floor(Math.random() * this.attackPower) + 1;
+                player.takeDamage(damage);
+                game.addMessage(`${this.name}の攻撃！ ${damage}のダメージを受けた！`);
+            }
+        }
+        
+        // ゲームエンジン
+        class Game {
+            constructor() {
+                this.canvas = document.getElementById('game-canvas');
+                this.ctx = this.canvas.getContext('2d');
+                this.player = new Player();
+                this.currentMonster = null;
+                this.keys = {};
+                this.messages = [];
+                
+                this.setupInput();
+                this.gameLoop();
+            }
+            
+            setupInput() {
+                document.addEventListener('keydown', (e) => {
+                    this.keys[e.key] = true;
+                    this.handleKeyPress(e.key);
+                    e.preventDefault();
+                });
+                
+                document.addEventListener('keyup', (e) => {
+                    this.keys[e.key] = false;
+                    e.preventDefault();
+                });
+            }
+            
+            handleKeyPress(key) {
+                if (this.player.inBattle) {
+                    if (key === ' ') {
+                        this.player.attack(this.currentMonster);
+                    } else if (key === 'Escape') {
+                        this.player.flee();
+                    }
+                }
+            }
+            
+            update() {
+                if (!this.player.inBattle) {
+                    let dx = 0, dy = 0;
+                    
+                    if (this.keys['ArrowUp'] || this.keys['w'] || this.keys['W']) dy = -1;
+                    if (this.keys['ArrowDown'] || this.keys['s'] || this.keys['S']) dy = 1;
+                    if (this.keys['ArrowLeft'] || this.keys['a'] || this.keys['A']) dx = -1;
+                    if (this.keys['ArrowRight'] || this.keys['d'] || this.keys['D']) dx = 1;
+                    
+                    if (dx !== 0 || dy !== 0) {
+                        this.player.move(dx, dy);
+                    }
+                }
+                
+                this.updateUI();
+            }
+            
+            updateUI() {
+                document.getElementById('player-level').textContent = `Lv: ${this.player.level}`;
+                document.getElementById('player-hp').textContent = `HP: ${this.player.hp}/${this.player.maxHp}`;
+                document.getElementById('player-gold').textContent = `G: ${this.player.gold}`;
+                document.getElementById('player-exp').textContent = `EXP: ${this.player.exp}/${this.player.expToNext}`;
+            }
+            
+            addMessage(text) {
+                this.messages.push(text);
+                if (this.messages.length > 10) {
+                    this.messages.shift();
+                }
+                
+                const messageDiv = document.getElementById('message');
+                messageDiv.innerHTML = this.messages.join('<br>');
+                messageDiv.scrollTop = messageDiv.scrollHeight;
+            }
+            
+            render() {
+                // 画面クリア
+                this.ctx.fillStyle = this.player.inBattle ? '#330000' : '#006600';
+                this.ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
+                
+                if (this.player.inBattle && this.currentMonster) {
+                    // 戦闘画面
+                    this.ctx.fillStyle = '#ff0000';
+                    this.ctx.fillRect(150, 100, 100, 50);
+                    this.ctx.fillStyle = '#ffffff';
+                    this.ctx.font = '12px monospace';
+                    this.ctx.fillText(this.currentMonster.name, 160, 120);
+                    this.ctx.fillText(`HP: ${this.currentMonster.hp}/${this.currentMonster.maxHp}`, 160, 135);
+                    
+                    // プレイヤー（戦闘中）
+                    this.ctx.fillStyle = '#ffff00';
+                    this.ctx.fillRect(50, 200, 20, 20);
+                    this.ctx.fillStyle = '#ffffff';
+                    this.ctx.fillText('勇者', 45, 195);
+                } else {
+                    // フィールド画面
+                    // プレイヤー描画
+                    this.ctx.fillStyle = '#ffff00';
+                    this.ctx.fillRect(this.player.x - 5, this.player.y - 5, 10, 10);
+                    
+                    // プレイヤー名表示
+                    this.ctx.fillStyle = '#ffffff';
+                    this.ctx.font = '12px monospace';
+                    this.ctx.fillText('勇者', this.player.x - 10, this.player.y - 10);
+                    
+                    // 簡単な地形
+                    this.ctx.fillStyle = '#8B4513';
+                    this.ctx.fillRect(100, 50, 200, 20);
+                    this.ctx.fillRect(50, 200, 300, 20);
+                }
+            }
+            
+            gameLoop() {
+                this.update();
+                this.render();
+                requestAnimationFrame(() => this.gameLoop());
+            }
+        }
+        
+        // ゲーム開始
+        let game;
+        document.addEventListener('DOMContentLoaded', () => {
+            game = new Game();
+        });
+    </script>
+</body>
+</html>

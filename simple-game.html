@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ドラゴンクエスト1 - シンプル版</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 20px;
+            background: #000;
+            color: #fff;
+            font-family: monospace;
+        }
+        #game-container {
+            text-align: center;
+        }
+        canvas {
+            border: 2px solid #fff;
+            background: #000;
+        }
+        #ui {
+            margin-top: 10px;
+        }
+    </style>
+</head>
+<body>
+    <div id="game-container">
+        <h1>ドラゴンクエスト1</h1>
+        <canvas id="game-canvas" width="400" height="300"></canvas>
+        <div id="ui">
+            <div id="player-stats">
+                <span id="player-level">Lv: 1</span> | 
+                <span id="player-hp">HP: 15/15</span> | 
+                <span id="player-gold">G: 120</span>
+            </div>
+            <div id="controls">
+                矢印キーまたはWASDで移動
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // シンプルなプレイヤークラス
+        class SimplePlayer {
+            constructor() {
+                this.x = 200;
+                this.y = 150;
+                this.level = 1;
+                this.hp = 15;
+                this.maxHp = 15;
+                this.gold = 120;
+                this.speed = 2;
+            }
+            
+            move(dx, dy) {
+                this.x += dx * this.speed;
+                this.y += dy * this.speed;
+                
+                // 画面境界チェック
+                this.x = Math.max(10, Math.min(390, this.x));
+                this.y = Math.max(10, Math.min(290, this.y));
+            }
+        }
+        
+        // シンプルなゲームエンジン
+        class SimpleGame {
+            constructor() {
+                this.canvas = document.getElementById('game-canvas');
+                this.ctx = this.canvas.getContext('2d');
+                this.player = new SimplePlayer();
+                this.keys = {};
+                
+                this.setupInput();
+                this.gameLoop();
+            }
+            
+            setupInput() {
+                document.addEventListener('keydown', (e) => {
+                    this.keys[e.key] = true;
+                    e.preventDefault();
+                });
+                
+                document.addEventListener('keyup', (e) => {
+                    this.keys[e.key] = false;
+                    e.preventDefault();
+                });
+            }
+            
+            update() {
+                let dx = 0, dy = 0;
+                
+                if (this.keys['ArrowUp'] || this.keys['w'] || this.keys['W']) dy = -1;
+                if (this.keys['ArrowDown'] || this.keys['s'] || this.keys['S']) dy = 1;
+                if (this.keys['ArrowLeft'] || this.keys['a'] || this.keys['A']) dx = -1;
+                if (this.keys['ArrowRight'] || this.keys['d'] || this.keys['D']) dx = 1;
+                
+                if (dx !== 0 || dy !== 0) {
+                    this.player.move(dx, dy);
+                }
+                
+                this.updateUI();
+            }
+            
+            updateUI() {
+                document.getElementById('player-level').textContent = `Lv: ${this.player.level}`;
+                document.getElementById('player-hp').textContent = `HP: ${this.player.hp}/${this.player.maxHp}`;
+                document.getElementById('player-gold').textContent = `G: ${this.player.gold}`;
+            }
+            
+            render() {
+                // 画面クリア
+                this.ctx.fillStyle = '#006600';
+                this.ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
+                
+                // プレイヤー描画
+                this.ctx.fillStyle = '#ffff00';
+                this.ctx.fillRect(this.player.x - 5, this.player.y - 5, 10, 10);
+                
+                // 情報表示
+                this.ctx.fillStyle = '#ffffff';
+                this.ctx.font = '12px monospace';
+                this.ctx.fillText('勇者', this.player.x - 10, this.player.y - 10);
+            }
+            
+            gameLoop() {
+                this.update();
+                this.render();
+                requestAnimationFrame(() => this.gameLoop());
+            }
+        }
+        
+        // ゲーム開始
+        document.addEventListener('DOMContentLoaded', () => {
+            new SimpleGame();
+        });
+    </script>
+</body>
+</html>

@@ -28,16 +28,56 @@ class GameEngine {
         this.isRunning = false;
         this.lastTime = 0;
         
-        // ゲーム状態
-        this.gameState = 'field';
-        
         // 基本設定
         this.tileSize = 16;
-        this.scale = 2; // ピクセルアートのスケール
+        this.scale = 2;
         
         // 実際の描画サイズを設定
         this.canvas.style.width = (this.canvas.width * this.scale) + 'px';
         this.canvas.style.height = (this.canvas.height * this.scale) + 'px';
+        
+        // ゲームシステムの初期化
+        this.initGameSystems();
+    }
+    
+    /**
+     * ゲームシステムの初期化
+     */
+    initGameSystems() {
+        // プレイヤー作成
+        this.player = new Player('勇者', 1);
+        this.player.setPosition(10, 10);
+        
+        // マップ作成
+        this.map = new Map(50, 50);
+        
+        // 描画エンジン
+        this.renderEngine = new RenderEngine(this.canvas);
+        
+        // 入力ハンドラー
+        this.inputHandler = new InputHandler();
+        
+        // 状態管理
+        this.stateManager = new StateManager();
+        
+        // エンカウントシステム
+        this.encounterSystem = new EncounterSystem();
+        
+        // 戦闘システム
+        this.combatSystem = new CombatSystem();
+        
+        // エンディングシステム
+        this.endingSystem = new EndingSystem();
+        
+        // テスト用のプレイヤー位置
+        this.testPlayerX = 10;
+        this.testPlayerY = 10;
+        
+        // 初期状態をフィールドに設定
+        const fieldState = new FieldState(this.player, this.map, this.encounterSystem);
+        this.stateManager.setState(fieldState);
+        
+        console.log('ゲームシステム初期化完了');
     }
     
     /**
@@ -92,8 +132,27 @@ class GameEngine {
      * ゲーム状態更新
      */
     update(deltaTime) {
-        // 現在は基本的な更新のみ
-        // 後のタスクで具体的なゲームロジックを実装
+        // 現在の状態を更新
+        const currentState = this.stateManager.getCurrentState();
+        if (currentState && currentState.update) {
+            currentState.update(deltaTime);
+        }
+        
+        // UI更新
+        this.updateUI();
+    }
+    
+    /**
+     * UI更新
+     */
+    updateUI() {
+        const levelElement = document.getElementById('player-level');
+        const hpElement = document.getElementById('player-hp');
+        const goldElement = document.getElementById('player-gold');
+        
+        if (levelElement) levelElement.textContent = `Lv: ${this.player.level}`;
+        if (hpElement) hpElement.textContent = `HP: ${this.player.hp}/${this.player.maxHp}`;
+        if (goldElement) goldElement.textContent = `G: ${this.player.gold}`;
     }
     
     /**
@@ -101,69 +160,63 @@ class GameEngine {
      */
     render() {
         // 画面クリア
-        this.ctx.fillStyle = '#000';
-        this.ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
+        this.renderEngine.clear();
         
-        // 基本的なテスト描画
-        this.ctx.fillStyle = '#0f0';
-        this.ctx.fillRect(100, 100, this.tileSize, this.tileSize);
+        // テスト描画（デバッグ用）
+        this.renderEngine.testDraw(this.testPlayerX, this.testPlayerY);
         
-        // テキスト表示
-        this.ctx.fillStyle = '#fff';
-        this.ctx.font = '16px monospace';
-        this.ctx.fillText('ドラゴンクエスト1 - 準備完了', 50, 50);
+        // 現在の状態を描画
+        const currentState = this.stateManager.getCurrentState();
+        if (currentState && currentState.render) {
+            currentState.render(this.renderEngine);
+        }
     }
     
     /**
      * 入力ハンドラーの設定
      */
     setupInputHandlers() {
-        document.addEventListener('keydown', (event) => {
-            this.handleKeyDown(event);
-        });
+        this.inputHandler.onKeyDown = (key) => {
+            // テスト用の移動処理
+            this.handleTestMovement(key);
+            
+            const currentState = this.stateManager.getCurrentState();
+            if (currentState && currentState.handleInput) {
+                currentState.handleInput(key, this.stateManager);
+            }
+        };
         
-        document.addEventListener('keyup', (event) => {
-            this.handleKeyUp(event);
-        });
+        this.inputHandler.enable();
     }
     
     /**
-     * キー押下処理
+     * テスト用の移動処理
      */
-    handleKeyDown(event) {
-        console.log('Key pressed:', event.key);
+    handleTestMovement(key) {
+        const maxX = Math.floor(this.canvas.width / 32) - 1;
+        const maxY = Math.floor(this.canvas.height / 32) - 1;
         
-        // 基本的なキー処理（後のタスクで拡張）
-        switch(event.key) {
+        switch(key) {
             case 'ArrowUp':
             case 'w':
             case 'W':
-                console.log('上移動');
+                if (this.testPlayerY > 0) this.testPlayerY--;
                 break;
             case 'ArrowDown':
             case 's':
             case 'S':
-                console.log('下移動');
+                if (this.testPlayerY < maxY) this.testPlayerY++;
                 break;
             case 'ArrowLeft':
             case 'a':
             case 'A':
-                console.log('左移動');
+                if (this.testPlayerX > 0) this.testPlayerX--;
                 break;
             case 'ArrowRight':
             case 'd':
             case 'D':
-                console.log('右移動');
+                if (this.testPlayerX < maxX) this.testPlayerX++;
                 break;
         }
-        
-        event.preventDefault();
-    }
-    
-    /**
-     * キー離上処理
-     */
-    handleKeyUp(event) {
-        // 現在は何もしない
     }
 }

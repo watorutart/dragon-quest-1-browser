@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <title>基本テスト</title>
+</head>
+<body>
+    <h1>基本テスト</h1>
+    <canvas id="canvas" width="200" height="200" style="border: 1px solid black;"></canvas>
+    
+    <script>
+        console.log('スクリプト開始');
+        
+        const canvas = document.getElementById('canvas');
+        const ctx = canvas.getContext('2d');
+        
+        // 緑の四角を描画
+        ctx.fillStyle = 'green';
+        ctx.fillRect(50, 50, 100, 100);
+        
+        console.log('描画完了');
+        
+        // キーボードテスト
+        document.addEventListener('keydown', (e) => {
+            console.log('キー押下:', e.key);
+        });
+    </script>
+</body>
+</html>
