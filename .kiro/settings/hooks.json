@@ -1,0 +1,57 @@
+{
+  "hooks": [
+    {
+      "id": "play-sound-on-save",
+      "name": "ファイル保存時に音を鳴らす",
+      "description": "ファイルを保存した時に成功音を再生します",
+      "trigger": {
+        "type": "file-save",
+        "pattern": "**/*.{js,ts,jsx,tsx,css,html,md}"
+      },
+      "action": {
+        "type": "system-command",
+        "command": "afplay /System/Library/Sounds/Glass.aiff"
+      },
+      "enabled": true
+    },
+    {
+      "id": "play-sound-on-test-pass",
+      "name": "テスト成功時に音を鳴らす",
+      "description": "テストが成功した時に成功音を再生します",
+      "trigger": {
+        "type": "test-pass"
+      },
+      "action": {
+        "type": "system-command",
+        "command": "afplay /System/Library/Sounds/Ping.aiff"
+      },
+      "enabled": true
+    },
+    {
+      "id": "play-sound-on-test-fail",
+      "name": "テスト失敗時に音を鳴らす",
+      "description": "テストが失敗した時に警告音を再生します",
+      "trigger": {
+        "type": "test-fail"
+      },
+      "action": {
+        "type": "system-command",
+        "command": "afplay /System/Library/Sounds/Sosumi.aiff"
+      },
+      "enabled": true
+    },
+    {
+      "id": "play-sound-on-error",
+      "name": "エラー発生時に音を鳴らす",
+      "description": "コンパイルエラーや実行エラーが発生した時に警告音を再生します",
+      "trigger": {
+        "type": "error"
+      },
+      "action": {
+        "type": "system-command",
+        "command": "afplay /System/Library/Sounds/Funk.aiff"
+      },
+      "enabled": true
+    }
+  ]
+}
