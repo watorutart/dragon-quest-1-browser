@@ -1,5 +1,5 @@
 const Player = require('../src/player');
-const Item = require('../src/item');
+const { Item } = require('../src/item');
 
 describe('Equipment System', () => {
   let player;

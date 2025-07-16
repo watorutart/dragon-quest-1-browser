@@ -1,6 +1,6 @@
 const Shop = require('../src/shop');
 const Player = require('../src/player');
-const Item = require('../src/item');
+const { Item } = require('../src/item');
 
 describe('Shop', () => {
   let shop;

@@ -3,6 +3,13 @@
  * フィールド、戦闘、メニューなどの状態遷移を管理
  */
 
+// 依存性の解決
+let BattleState, Player;
+if (typeof require !== 'undefined') {
+    BattleState = require('./battleState');
+    Player = require('./player');
+}
+
 // ブラウザ環境では他のスクリプトファイルから直接参照
 
 // 状態定数

@@ -3,6 +3,14 @@
  * プレイヤーの移動、エンカウント処理、入力処理を管理
  */
 
+// 依存性の解決
+let InputHandler, EncounterSystem, Map;
+if (typeof require !== 'undefined') {
+    InputHandler = require('./inputHandler');
+    EncounterSystem = require('./encounterSystem');
+    Map = require('./map');
+}
+
 // ブラウザ環境では他のスクリプトファイルから直接参照
 
 // 定数定義
