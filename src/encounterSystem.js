@@ -5,11 +5,11 @@
 
 class EncounterSystem {
     /**
-     * エンカウント判定を行う
+     * エンカウント判定を行う（原始版）
      * @param {number} encounterRate - エンカウント率 (0.0 - 1.0)
      * @returns {boolean} エンカウントが発生したかどうか
      */
-    checkEncounter(encounterRate) {
+    checkEncounter_primitive(encounterRate) {
         if (encounterRate <= 0) return false;
         if (encounterRate >= 1) return true;
         
@@ -37,7 +37,7 @@ class EncounterSystem {
      * @returns {Object} エンカウント結果
      */
     processEncounter(encounterRate, monsters) {
-        const encountered = this.checkEncounter(encounterRate);
+        const encountered = this.checkEncounter_primitive(encounterRate);
         
         if (encountered) {
             const monster = this.getRandomMonster(monsters);
@@ -51,6 +51,45 @@ class EncounterSystem {
             encountered: false,
             monster: null
         };
+    }
+
+    /**
+     * プレイヤーのエンカウント判定を実行する（Player依存版）
+     * @param {Player} player - プレイヤーオブジェクト
+     * @returns {Object} エンカウント結果
+     */
+    checkEncounter(player) {
+        // デフォルトのエンカウント率とモンスターリスト
+        const defaultRate = this.encounterRate || 0.1;
+        const defaultMonsters = ['slime', 'goblin', 'skeleton'];
+        
+        // 直接processEncounterメソッドを呼び出すのではなく、独自実装
+        const encountered = this.checkEncounter_impl(defaultRate);
+        
+        if (encountered) {
+            const monster = this.getRandomMonster(defaultMonsters);
+            return {
+                encountered: true,
+                monster: monster
+            };
+        }
+        
+        return {
+            encountered: false,
+            monster: null
+        };
+    }
+
+    /**
+     * エンカウント判定を行う（実装）
+     * @param {number} encounterRate - エンカウント率 (0.0 - 1.0)
+     * @returns {boolean} エンカウントが発生したかどうか
+     */
+    checkEncounter_impl(encounterRate) {
+        if (encounterRate <= 0) return false;
+        if (encounterRate >= 1) return true;
+        
+        return Math.random() < encounterRate;
     }
 }
 

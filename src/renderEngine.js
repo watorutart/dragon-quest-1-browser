@@ -231,6 +231,142 @@ class RenderEngine {
     }
 
     /**
+     * 戦闘画面を描画
+     * @param {Object} battleState - 戦闘状態
+     */
+    renderBattleScreen(battleState) {
+        if (!battleState || !battleState.player || !battleState.monster) {
+            return;
+        }
+        
+        // 背景を黒で塗りつぶし
+        this.context.fillStyle = '#000000';
+        this.context.fillRect(0, 0, this.width, this.height);
+        
+        // モンスター表示エリア
+        this.context.fillStyle = '#444444';
+        this.context.fillRect(50, 50, this.width - 100, 200);
+        
+        // モンスター名
+        this.context.fillStyle = '#FFFFFF';
+        this.context.font = '24px monospace';
+        this.context.fillText(battleState.monster.name, 70, 100);
+        
+        // モンスターHP
+        const monsterHpBar = `HP: ${battleState.monster.hp}/${battleState.monster.maxHp}`;
+        this.context.font = '16px monospace';
+        this.context.fillText(monsterHpBar, 70, 130);
+        
+        // プレイヤー情報エリア
+        this.context.fillStyle = '#222222';
+        this.context.fillRect(50, this.height - 200, this.width - 100, 150);
+        
+        // プレイヤー名とレベル
+        this.context.fillStyle = '#FFFFFF';
+        this.context.font = '18px monospace';
+        this.context.fillText(`${battleState.player.name} Lv.${battleState.player.level}`, 70, this.height - 170);
+        
+        // プレイヤーHP
+        const playerHpBar = `HP: ${battleState.player.hp}/${battleState.player.maxHp}`;
+        this.context.font = '16px monospace';
+        this.context.fillText(playerHpBar, 70, this.height - 140);
+        
+        // 戦闘コマンド
+        this.context.fillStyle = '#FFFF00';
+        this.context.font = '16px monospace';
+        this.context.fillText('コマンド: [1]攻撃 [2]逃走', 70, this.height - 110);
+        
+        // 戦闘状況メッセージ
+        if (battleState.lastMessage) {
+            this.context.fillStyle = '#CCCCCC';
+            this.context.font = '14px monospace';
+            this.context.fillText(battleState.lastMessage, 70, this.height - 80);
+        }
+        
+        // ターン表示
+        const turnText = battleState.currentTurn === 'player' ? 'あなたのターン' : 'モンスターのターン';
+        this.context.fillStyle = '#00FF00';
+        this.context.font = '16px monospace';
+        this.context.fillText(turnText, this.width - 200, this.height - 170);
+    }
+
+    /**
+     * 対話画面を描画
+     * @param {Object} dialogState - 対話状態
+     */
+    renderDialogScreen(dialogState) {
+        if (!dialogState || !dialogState.npc) {
+            return;
+        }
+        
+        // 半透明の背景オーバーレイ
+        this.context.fillStyle = 'rgba(0, 0, 0, 0.7)';
+        this.context.fillRect(0, 0, this.width, this.height);
+        
+        // 対話ウィンドウ
+        const dialogX = 50;
+        const dialogY = this.height - 150;
+        const dialogWidth = this.width - 100;
+        const dialogHeight = 100;
+        
+        this.context.fillStyle = '#FFFFFF';
+        this.context.fillRect(dialogX, dialogY, dialogWidth, dialogHeight);
+        
+        this.context.strokeStyle = '#000000';
+        this.context.lineWidth = 3;
+        this.context.strokeRect(dialogX, dialogY, dialogWidth, dialogHeight);
+        
+        // NPC名
+        this.context.fillStyle = '#000000';
+        this.context.font = '16px monospace';
+        this.context.fillText(dialogState.npc.name, dialogX + 10, dialogY + 25);
+        
+        // 対話テキスト
+        this.context.font = '14px monospace';
+        if (dialogState.currentMessage) {
+            const lines = this.wrapText(dialogState.currentMessage, dialogWidth - 20);
+            lines.forEach((line, index) => {
+                this.context.fillText(line, dialogX + 10, dialogY + 50 + (index * 18));
+            });
+        }
+        
+        // 続行メッセージ
+        this.context.fillStyle = '#666666';
+        this.context.font = '12px monospace';
+        this.context.fillText('Enterキーで続行', dialogX + dialogWidth - 120, dialogY + dialogHeight - 10);
+    }
+
+    /**
+     * テキストを指定幅で折り返し
+     * @param {string} text - テキスト
+     * @param {number} maxWidth - 最大幅
+     * @returns {Array} 行の配列
+     */
+    wrapText(text, maxWidth) {
+        const words = text.split('');
+        const lines = [];
+        let currentLine = '';
+        
+        for (const char of words) {
+            const testLine = currentLine + char;
+            const metrics = this.context.measureText(testLine);
+            
+            if (metrics.width > maxWidth && currentLine !== '') {
+                lines.push(currentLine);
+                currentLine = char;
+            } else {
+                currentLine = testLine;
+            }
+        }
+        
+        if (currentLine !== '') {
+            lines.push(currentLine);
+        }
+        
+        return lines;
+    }
+
+    /**
      * 描画統計をリセット
      */
     resetStats() {

@@ -31,6 +31,7 @@ class GameEngine {
         // 基本設定
         this.tileSize = 16;
         this.scale = 2;
+        this.currentState = 'field';
         
         // 実際の描画サイズを設定
         this.canvas.style.width = (this.canvas.width * this.scale) + 'px';
@@ -204,22 +205,57 @@ class GameEngine {
         // 画面クリア
         this.renderEngine.clear();
         
+        // 現在の状態に応じて描画
+        switch (this.currentState) {
+            case 'field':
+                this.renderFieldState();
+                break;
+            case 'battle':
+                this.renderBattleState();
+                break;
+            case 'dialog':
+                this.renderFieldState(); // 背景としてフィールドを描画
+                this.renderDialogState();
+                break;
+            default:
+                this.renderFieldState();
+        }
+        
+        // デバッグ情報表示
+        if (this.renderEngine.debugMode) {
+            this.renderDebugInfo();
+        }
+    }
+    
+    /**
+     * フィールド状態の描画
+     */
+    renderFieldState() {
         // 実際のマップを描画
         if (this.mapData) {
             this.renderEngine.renderMap(this.mapData, this.camera.x, this.camera.y, 32);
             this.renderEngine.renderNPCs(this.mapData.npcs, this.camera.x, this.camera.y, 32);
             this.renderEngine.renderPlayer(this.player, this.camera.x, this.camera.y, 32);
         }
-        
-        // 現在の状態を描画
+    }
+    
+    /**
+     * 戦闘状態の描画
+     */
+    renderBattleState() {
         const currentState = this.stateManager.getCurrentState();
-        if (currentState && currentState.render) {
-            currentState.render(this.renderEngine);
+        if (currentState && currentState.constructor.name === 'BattleState') {
+            this.renderEngine.renderBattleScreen(currentState);
         }
-        
-        // デバッグ情報表示
-        if (this.renderEngine.debugMode) {
-            this.renderDebugInfo();
+    }
+    
+    /**
+     * 対話状態の描画
+     */
+    renderDialogState() {
+        const currentState = this.stateManager.getCurrentState();
+        if (currentState && currentState.constructor.name === 'DialogState') {
+            this.renderEngine.renderDialogScreen(currentState);
         }
     }
     
@@ -241,14 +277,27 @@ class GameEngine {
      */
     setupInputHandlers() {
         this.inputHandler.onKeyDown = (key) => {
-            // プレイヤー移動処理
-            this.handlePlayerMovement(key);
-            
             // デバッグモード切り替え
             if (key === 'F3') {
                 this.renderEngine.setDebugMode(!this.renderEngine.debugMode);
+                return;
             }
             
+            // 現在の状態に応じた入力処理
+            switch (this.currentState) {
+                case 'field':
+                    this.handlePlayerMovement(key);
+                    this.handleFieldInput(key);
+                    break;
+                case 'battle':
+                    this.handleBattleInput(key);
+                    break;
+                case 'dialog':
+                    this.handleDialogInput(key);
+                    break;
+            }
+            
+            // 状態クラスの入力処理も呼び出す
             const currentState = this.stateManager.getCurrentState();
             if (currentState && currentState.handleInput) {
                 currentState.handleInput(key, this.stateManager);
@@ -296,11 +345,167 @@ class GameEngine {
         if (this.map.isWalkable(newX, newY)) {
             this.player.setPosition(newX, newY);
             
-            // エンカウント判定（フィールド状態の場合）
-            const currentState = this.stateManager.getCurrentState();
-            if (currentState && currentState.checkEncounter) {
-                currentState.checkEncounter();
+            // エンカウント判定を実行
+            this.checkRandomEncounter();
+        }
+    }
+    
+    /**
+     * ランダムエンカウント判定
+     */
+    checkRandomEncounter() {
+        if (!this.encounterSystem) return;
+        
+        // エンカウント判定を実行
+        const encounterResult = this.encounterSystem.checkEncounter(this.player);
+        
+        if (encounterResult.encountered) {
+            // エンカウント発生時の処理
+            console.log('エンカウント発生！', encounterResult.monster.name);
+            this.startBattle(encounterResult.monster);
+        }
+    }
+    
+    /**
+     * 戦闘開始
+     * @param {Monster} monster - 敵モンスター
+     */
+    startBattle(monster) {
+        console.log(`${monster.name}が現れた！`);
+        
+        // BattleStateに遷移
+        const battleState = new BattleState(this.player, monster);
+        battleState.startBattle();
+        
+        // 戦闘終了後のコールバックを設定
+        battleState.onBattleEnd = (result) => {
+            this.endBattle(result);
+        };
+        
+        // 状態を戦闘に変更
+        this.stateManager.setState(battleState);
+        this.currentState = 'battle';
+    }
+    
+    /**
+     * 戦闘終了処理
+     * @param {Object} result - 戦闘結果
+     */
+    endBattle(result) {
+        console.log('戦闘終了:', result);
+        
+        // 経験値・ゴールド処理
+        if (result.victory) {
+            const expGained = result.expGained || 0;
+            const goldGained = result.goldGained || 0;
+            
+            this.player.gainExperience(expGained);
+            this.player.gainGold(goldGained);
+            
+            console.log(`${expGained}の経験値と${goldGained}Gを獲得！`);
+        }
+        
+        // フィールド状態に戻る
+        const fieldState = new FieldState(this.player, this.map, this.encounterSystem);
+        this.stateManager.setState(fieldState);
+        this.currentState = 'field';
+    }
+    
+    /**
+     * フィールド状態での入力処理
+     * @param {string} key - 押されたキー
+     */
+    handleFieldInput(key) {
+        // Enterキーでnpc interaction
+        if (key === 'Enter') {
+            this.checkNPCInteraction();
+        }
+    }
+    
+    /**
+     * 戦闘状態での入力処理
+     * @param {string} key - 押されたキー
+     */
+    handleBattleInput(key) {
+        const currentState = this.stateManager.getCurrentState();
+        if (!currentState || currentState.constructor.name !== 'BattleState') return;
+        
+        switch (key) {
+            case '1':
+                // 攻撃コマンド
+                const attackResult = currentState.executeCommand('attack');
+                if (attackResult.success) {
+                    currentState.lastMessage = `${attackResult.damage}のダメージ！`;
+                    currentState.nextTurn();
+                }
+                break;
+            case '2':
+                // 逃走コマンド
+                const fleeResult = currentState.executeCommand('flee');
+                if (fleeResult.success) {
+                    currentState.lastMessage = '逃走成功！';
+                    this.endBattle({ victory: false, fled: true });
+                } else {
+                    currentState.lastMessage = '逃走失敗...';
+                    currentState.nextTurn();
+                }
+                break;
+        }
+        
+        // 戦闘終了チェック
+        const battleResult = currentState.checkBattleEnd();
+        if (battleResult.isOver) {
+            this.endBattle(battleResult);
+        }
+    }
+    
+    /**
+     * 対話状態での入力処理
+     * @param {string} key - 押されたキー
+     */
+    handleDialogInput(key) {
+        if (key === 'Enter') {
+            // 対話終了処理
+            this.currentState = 'field';
+        }
+    }
+    
+    /**
+     * NPC相互作用チェック
+     */
+    checkNPCInteraction() {
+        if (!this.mapData || !this.mapData.npcs) return;
+        
+        const playerX = this.player.x;
+        const playerY = this.player.y;
+        
+        // プレイヤーの隣接位置をチェック
+        const adjacentPositions = [
+            { x: playerX, y: playerY - 1 }, // 上
+            { x: playerX + 1, y: playerY }, // 右
+            { x: playerX, y: playerY + 1 }, // 下
+            { x: playerX - 1, y: playerY }  // 左
+        ];
+        
+        for (const pos of adjacentPositions) {
+            const npc = this.map.getNPCAt(pos.x, pos.y);
+            if (npc) {
+                this.startDialog(npc);
+                break;
             }
         }
+    }
+    
+    /**
+     * 対話開始
+     * @param {Object} npc - NPC オブジェクト
+     */
+    startDialog(npc) {
+        console.log(`${npc.name}と話す:`);
+        console.log(npc.dialogue[0]);
+        
+        // 将来的にDialogStateクラスを使用する
+        this.currentState = 'dialog';
+        // TODO: DialogState implementation
     }
 }

@@ -137,11 +137,18 @@ class BattleState {
             this.endBattle();
         }
         
-        return {
+        const result = {
             success: fleeSuccess,
             fleeChance: fleeChance,
             attempts: this.fleeAttempts
         };
+        
+        // 失敗した場合でもfleeChanceを返す
+        if (!fleeSuccess && this.currentTurn === 'player') {
+            return result;
+        }
+        
+        return result;
     }
 
     /**
