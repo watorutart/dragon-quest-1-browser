@@ -6,22 +6,27 @@ class CombatSystem {
     /**
      * ダメージを計算する
      * ドラゴンクエスト1の基本ダメージ計算式: 攻撃力 - 防御力（最小1）
-     * @param {number} attack - 攻撃力
-     * @param {number} defense - 防御力
+     * @param {Player|Monster} attacker - 攻撃者オブジェクト
+     * @param {Player|Monster} defender - 防御者オブジェクト
      * @returns {number} 計算されたダメージ
      */
-    static calculateDamage(attack, defense) {
+    calculateDamage(attacker, defender) {
         const MIN_DAMAGE = 1;
         
-        // 入力値の正規化
-        const normalizedAttack = this._normalizeAttack(attack);
-        const normalizedDefense = this._normalizeDefense(defense);
+        // 攻撃力と防御力を取得
+        const attack = attacker.attack || attacker.getAttackPower?.() || 0;
+        const defense = defender.defense || defender.getDefensePower?.() || 0;
         
-        // 基本ダメージ計算
+        // 入力値の正規化
+        const normalizedAttack = CombatSystem._normalizeAttack(attack);
+        const normalizedDefense = CombatSystem._normalizeDefense(defense);
+        
+        // 基本ダメージ計算にランダム要素を追加
         const baseDamage = normalizedAttack - normalizedDefense;
+        const randomFactor = 0.65 + (Math.random() * 0.5); // 0.65 to 1.15
         
         // 最小ダメージ保証
-        return Math.max(MIN_DAMAGE, baseDamage);
+        return Math.max(MIN_DAMAGE, Math.floor(baseDamage * randomFactor));
     }
 
     /**
@@ -51,8 +56,8 @@ class CombatSystem {
      * @param {Monster} monster - モンスターオブジェクト
      * @returns {Object} 攻撃結果
      */
-    static playerAttack(player, monster) {
-        const damage = this.calculateDamage(player.attack, monster.defense);
+    playerAttack(player, monster) {
+        const damage = this.calculateDamage(player, monster);
         monster.takeDamage(damage);
         
         return {
@@ -69,8 +74,8 @@ class CombatSystem {
      * @param {Player} player - プレイヤーオブジェクト
      * @returns {Object} 攻撃結果
      */
-    static monsterAttack(monster, player) {
-        const damage = this.calculateDamage(monster.attack, player.defense);
+    monsterAttack(monster, player) {
+        const damage = this.calculateDamage(monster, player);
         player.takeDamage(damage);
         
         return {
@@ -87,7 +92,7 @@ class CombatSystem {
      * @param {Monster} monster - モンスターオブジェクト
      * @returns {Object} 戦闘結果
      */
-    static checkBattleResult(player, monster) {
+    checkBattleResult(player, monster) {
         if (monster.isDead()) {
             return {
                 isOver: true,
@@ -97,7 +102,7 @@ class CombatSystem {
             };
         }
         
-        if (player.isDead()) {
+        if (!player.isAlive()) {
             return {
                 isOver: true,
                 winner: 'monster',
@@ -120,7 +125,7 @@ class CombatSystem {
      * @param {Monster} monster - モンスターオブジェクト
      * @returns {Object} 戦闘シミュレーション結果
      */
-    static simulateBattle(player, monster) {
+    simulateBattle(player, monster) {
         const log = [];
         let turns = 0;
         const maxTurns = 100; // 無限ループ防止

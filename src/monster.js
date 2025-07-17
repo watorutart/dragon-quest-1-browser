@@ -22,9 +22,9 @@ const MONSTER_DATABASE = {
     },
     'orc': {
         name: 'オーク',
-        hp: 13,
-        attack: 8,
-        defense: 4,
+        hp: 20,
+        attack: 14,
+        defense: 8,
         experience: 6,
         gold: 12
     },
@@ -35,6 +35,14 @@ const MONSTER_DATABASE = {
         defense: 6,
         experience: 11,
         gold: 20
+    },
+    'dragonKing': {
+        name: '竜王',
+        hp: 58,
+        attack: 24,
+        defense: 14,
+        experience: 1000,
+        gold: 2000
     }
 };
 
@@ -90,6 +98,14 @@ class Monster {
      */
     isDead() {
         return this.hp <= 0;
+    }
+
+    /**
+     * 生存状態かどうかを判定
+     * @returns {boolean} 生きている場合true
+     */
+    isAlive() {
+        return this.hp > 0;
     }
 
     /**
