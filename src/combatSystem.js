@@ -56,8 +56,9 @@ class CombatSystem {
      * @param {Monster} monster - モンスターオブジェクト
      * @returns {Object} 攻撃結果
      */
-    playerAttack(player, monster) {
-        const damage = this.calculateDamage(player, monster);
+    static playerAttack(player, monster) {
+        const combatSystem = new CombatSystem();
+        const damage = combatSystem.calculateDamage(player, monster);
         monster.takeDamage(damage);
         
         return {
@@ -74,8 +75,9 @@ class CombatSystem {
      * @param {Player} player - プレイヤーオブジェクト
      * @returns {Object} 攻撃結果
      */
-    monsterAttack(monster, player) {
-        const damage = this.calculateDamage(monster, player);
+    static monsterAttack(monster, player) {
+        const combatSystem = new CombatSystem();
+        const damage = combatSystem.calculateDamage(monster, player);
         player.takeDamage(damage);
         
         return {
@@ -92,7 +94,7 @@ class CombatSystem {
      * @param {Monster} monster - モンスターオブジェクト
      * @returns {Object} 戦闘結果
      */
-    checkBattleResult(player, monster) {
+    static checkBattleResult(player, monster) {
         if (monster.isDead()) {
             return {
                 isOver: true,
