@@ -15,6 +15,8 @@ class Item {
     this.defense = itemData.defense || 0;
     this.price = itemData.price || 0;
     this.description = itemData.description || '';
+    this.healAmount = itemData.healAmount || 0;
+    this.curePoison = itemData.curePoison || false;
   }
 
   _validateItemData(itemData) {

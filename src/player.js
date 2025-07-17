@@ -299,7 +299,7 @@ class Player {
         
         const hpGrowth = Math.floor((level - 1) * 5);
         const attackGrowth = Math.floor((level - 1) * 2);
-        const defenseGrowth = Math.floor((level - 1) * 1.5);
+        const defenseGrowth = Math.floor((level - 1) * 1.8);
         
         return {
             maxHp: baseHp + hpGrowth,
