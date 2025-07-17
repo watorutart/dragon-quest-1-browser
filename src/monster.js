@@ -28,6 +28,14 @@ const MONSTER_DATABASE = {
         experience: 6,
         gold: 12
     },
+    'goblin': {
+        name: 'ゴブリン',
+        hp: 8,
+        attack: 5,
+        defense: 3,
+        experience: 3,
+        gold: 6
+    },
     'skeleton': {
         name: 'がいこつ',
         hp: 18,
