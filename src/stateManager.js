@@ -4,10 +4,11 @@
  */
 
 // 依存性の解決
-let BattleState, Player;
+let BattleState, Player, FieldState;
 if (typeof require !== 'undefined') {
     BattleState = require('./battleState');
     Player = require('./player');
+    FieldState = require('./fieldState');
 }
 
 // ブラウザ環境では他のスクリプトファイルから直接参照

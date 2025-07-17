@@ -361,8 +361,11 @@ class GameEngine {
         
         if (encounterResult.encountered) {
             // エンカウント発生時の処理
-            console.log('エンカウント発生！', encounterResult.monster.name);
-            this.startBattle(encounterResult.monster);
+            console.log('エンカウント発生！', encounterResult.monster);
+            
+            // 文字列のモンスタータイプからMonsterインスタンスを作成
+            const monster = new Monster(encounterResult.monster);
+            this.startBattle(monster);
         }
     }
     
@@ -385,6 +388,9 @@ class GameEngine {
         // 状態を戦闘に変更
         this.stateManager.setState(battleState);
         this.currentState = 'battle';
+        
+        // 戦闘画面への遷移完了メッセージ
+        console.log('戦闘画面に遷移しました');
     }
     
     /**
@@ -394,21 +400,72 @@ class GameEngine {
     endBattle(result) {
         console.log('戦闘終了:', result);
         
-        // 経験値・ゴールド処理
-        if (result.victory) {
-            const expGained = result.expGained || 0;
-            const goldGained = result.goldGained || 0;
-            
-            this.player.gainExperience(expGained);
-            this.player.gainGold(goldGained);
-            
-            console.log(`${expGained}の経験値と${goldGained}Gを獲得！`);
+        // 戦闘結果に応じた処理
+        if (result.isOver) {
+            if (result.winner === 'player') {
+                // プレイヤー勝利時の処理
+                const expGained = result.experienceGained || 0;
+                const goldGained = result.goldGained || 0;
+                
+                this.player.gainExperience(expGained);
+                this.player.gainGold(goldGained);
+                
+                console.log(`勝利！${expGained}の経験値と${goldGained}Gを獲得！`);
+                
+                // レベルアップチェック
+                this.checkLevelUp();
+                
+            } else if (result.winner === 'monster') {
+                // プレイヤー敗北時の処理
+                console.log('敗北...');
+                this.handlePlayerDefeat();
+                
+            } else if (result.fled) {
+                // 逃走時の処理
+                console.log('逃走成功！');
+            }
         }
         
         // フィールド状態に戻る
         const fieldState = new FieldState(this.player, this.map, this.encounterSystem);
         this.stateManager.setState(fieldState);
         this.currentState = 'field';
+        
+        console.log('フィールドに復帰しました');
+    }
+    
+    /**
+     * レベルアップチェック
+     */
+    checkLevelUp() {
+        const requiredExp = this.player.getRequiredExperience();
+        if (this.player.experience >= requiredExp) {
+            const oldLevel = this.player.level;
+            this.player.levelUp();
+            console.log(`レベルアップ！Lv.${oldLevel} → Lv.${this.player.level}`);
+        }
+    }
+    
+    /**
+     * プレイヤー敗北処理
+     */
+    handlePlayerDefeat() {
+        // ゲームオーバー処理（簡易版）
+        console.log('ゲームオーバー');
+        
+        // プレイヤーをスタート地点に戻す
+        this.player.setPosition(
+            this.mapData.playerStartPosition.x,
+            this.mapData.playerStartPosition.y
+        );
+        
+        // HPを半分回復
+        this.player.hp = Math.floor(this.player.maxHp / 2);
+        
+        // 所持金を半分失う
+        this.player.gold = Math.floor(this.player.gold / 2);
+        
+        console.log('王様の力でスタート地点に戻されました...');
     }
     
     /**
@@ -452,6 +509,11 @@ class GameEngine {
                 break;
         }
         
+        // モンスターターンの自動実行
+        if (currentState.currentTurn === 'monster' && currentState.isActive) {
+            this.executeMonsterTurn(currentState);
+        }
+        
         // 戦闘終了チェック
         const battleResult = currentState.checkBattleEnd();
         if (battleResult.isOver) {
@@ -459,6 +521,29 @@ class GameEngine {
         }
     }
     
+    /**
+     * モンスターターンの実行
+     * @param {BattleState} battleState - 戦闘状態
+     */
+    executeMonsterTurn(battleState) {
+        // 短い遅延の後にモンスターの攻撃を実行
+        setTimeout(() => {
+            if (battleState.isActive && battleState.currentTurn === 'monster') {
+                const attackResult = CombatSystem.monsterAttack(battleState.monster, battleState.player);
+                battleState.lastMessage = `${battleState.monster.name}の攻撃！${attackResult.damage}のダメージ！`;
+                
+                // プレイヤーターンに戻す
+                battleState.nextTurn();
+                
+                // 戦闘終了チェック
+                const battleResult = battleState.checkBattleEnd();
+                if (battleResult.isOver) {
+                    this.endBattle(battleResult);
+                }
+            }
+        }, 1000); // 1秒後に実行
+    }
+
     /**
      * 対話状態での入力処理
      * @param {string} key - 押されたキー

@@ -2,9 +2,12 @@
  * Player クラス - ドラゴンクエスト1のプレイヤーキャラクター
  */
 class Player {
-    constructor() {
+    constructor(name = '勇者', level = 1) {
+        // 基本情報
+        this.name = name;
+        
         // 基本ステータス（設計書の初期値に基づく）
-        this.level = 1;
+        this.level = level;
         this.hp = 15;
         this.maxHp = 15;
         this.attack = 4;
@@ -235,6 +238,42 @@ class Player {
     getExpToNextLevel() {
         if (this.level >= 30) return 0;
         return this.getExpForLevel(this.level + 1) - this.experience;
+    }
+    
+    /**
+     * 現在のレベルアップに必要な経験値を取得
+     * @returns {number} レベルアップに必要な経験値
+     */
+    getRequiredExperience() {
+        if (this.level >= 30) return this.experience; // 最大レベルの場合
+        return this.getExpForLevel(this.level + 1);
+    }
+    
+    /**
+     * ゴールドを獲得する
+     * @param {number} amount - 獲得するゴールド量
+     */
+    gainGold(amount) {
+        if (amount < 0) {
+            console.warn('負の値のゴールドは獲得できません');
+            return;
+        }
+        this.gold += amount;
+        // ゴールドの最大値制限（ドラゴンクエスト1では65535）
+        this.gold = Math.min(this.gold, 65535);
+    }
+    
+    /**
+     * レベルアップを実行する
+     */
+    levelUp() {
+        if (this.level >= 30) {
+            console.warn('既に最大レベルです');
+            return;
+        }
+        
+        this.level++;
+        this._applyLevelUpStats();
     }
     
     /**
