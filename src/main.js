@@ -312,9 +312,12 @@ class GameEngine {
      * 戦闘状態の描画
      */
     renderBattleState() {
-        const currentState = this.stateManager.getCurrentState();
-        if (currentState && currentState.constructor.name === 'BattleState') {
-            this.renderEngine.renderBattleScreen(currentState);
+        const currentState = this.stateManager.getBattleState();
+        if (currentState) {
+            // 戦闘画面背景
+            this.renderEngine.clear();
+            this.ctx.fillStyle = '#000044';  // 暗い青色の背景
+            this.ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
             
             // 戦闘UI表示
             this.renderEngine.drawText('戦闘中', this.canvas.width / 2 - 40, 50, '#FFFFFF', '24px Arial');
