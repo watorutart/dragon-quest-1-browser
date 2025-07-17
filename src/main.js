@@ -189,13 +189,82 @@ class GameEngine {
      * UI更新
      */
     updateUI() {
+        // プレイヤー名を更新
+        const nameElement = document.getElementById('player-name');
+        if (nameElement) nameElement.textContent = this.player.name;
+        
+        // ステータス要素を更新
         const levelElement = document.getElementById('player-level');
         const hpElement = document.getElementById('player-hp');
+        const mpElement = document.getElementById('player-mp');
+        const attackElement = document.getElementById('player-attack');
+        const defenseElement = document.getElementById('player-defense');
+        const expElement = document.getElementById('player-exp');
+        const expNextElement = document.getElementById('player-exp-next');
         const goldElement = document.getElementById('player-gold');
         
-        if (levelElement) levelElement.textContent = `Lv: ${this.player.level}`;
-        if (hpElement) hpElement.textContent = `HP: ${this.player.hp}/${this.player.maxHp}`;
-        if (goldElement) goldElement.textContent = `G: ${this.player.gold}`;
+        if (levelElement) levelElement.textContent = this.player.level;
+        if (hpElement) hpElement.textContent = `${this.player.hp}/${this.player.maxHp}`;
+        if (mpElement) mpElement.textContent = `${this.player.mp}/${this.player.maxMp}`;
+        if (attackElement) attackElement.textContent = this.player.attack;
+        if (defenseElement) defenseElement.textContent = this.player.defense;
+        if (expElement) expElement.textContent = this.player.experience;
+        if (expNextElement) {
+            const nextLevelExp = this.player.getExpToNextLevel();
+            expNextElement.textContent = nextLevelExp > 0 ? nextLevelExp : '--';
+        }
+        if (goldElement) goldElement.textContent = this.player.gold;
+    }
+    
+    /**
+     * ゲームメッセージを表示する
+     * @param {string} message - 表示するメッセージ
+     * @param {string} type - メッセージの種類 ('normal', 'important', 'error', 'success')
+     */
+    showMessage(message, type = 'normal') {
+        const messageLog = document.getElementById('message-log');
+        const messagesContainer = document.getElementById('game-messages');
+        
+        if (!messageLog || !messagesContainer) return;
+        
+        // メッセージ要素を作成
+        const messageElement = document.createElement('div');
+        messageElement.className = `message ${type}`;
+        messageElement.textContent = message;
+        
+        // メッセージを追加
+        messageLog.appendChild(messageElement);
+        
+        // メッセージコンテナを表示
+        messagesContainer.style.display = 'block';
+        
+        // 古いメッセージを削除（最大10個まで保持）
+        while (messageLog.children.length > 10) {
+            messageLog.removeChild(messageLog.firstChild);
+        }
+        
+        // 最新メッセージまでスクロール
+        messagesContainer.scrollTop = messagesContainer.scrollHeight;
+        
+        // 3秒後にメッセージを自動非表示（normalタイプのみ）
+        if (type === 'normal') {
+            setTimeout(() => {
+                if (messageLog.children.length === 0) {
+                    messagesContainer.style.display = 'none';
+                }
+            }, 3000);
+        }
+    }
+    
+    /**
+     * メッセージログをクリアする
+     */
+    clearMessages() {
+        const messageLog = document.getElementById('message-log');
+        const messagesContainer = document.getElementById('game-messages');
+        
+        if (messageLog) messageLog.innerHTML = '';
+        if (messagesContainer) messagesContainer.style.display = 'none';
     }
     
     /**
@@ -365,6 +434,7 @@ class GameEngine {
             
             // 文字列のモンスタータイプからMonsterインスタンスを作成
             const monster = new Monster(encounterResult.monster);
+            this.showMessage('モンスターが現れた！', 'important');
             this.startBattle(monster);
         }
     }
@@ -375,6 +445,7 @@ class GameEngine {
      */
     startBattle(monster) {
         console.log(`${monster.name}が現れた！`);
+        this.showMessage(`${monster.name}が現れた！`, 'important');
         
         // BattleStateに遷移
         const battleState = new BattleState(this.player, monster);
@@ -411,6 +482,8 @@ class GameEngine {
                 this.player.gainGold(goldGained);
                 
                 console.log(`勝利！${expGained}の経験値と${goldGained}Gを獲得！`);
+                this.showMessage(`${expGained}の経験値を獲得！`, 'success');
+                this.showMessage(`${goldGained}Gを獲得！`, 'success');
                 
                 // レベルアップチェック
                 this.checkLevelUp();
@@ -443,6 +516,7 @@ class GameEngine {
             const oldLevel = this.player.level;
             this.player.levelUp();
             console.log(`レベルアップ！Lv.${oldLevel} → Lv.${this.player.level}`);
+            this.showMessage(`レベルアップ！Lv.${this.player.level}`, 'important');
         }
     }
     

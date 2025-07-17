@@ -10,6 +10,8 @@ class Player {
         this.level = level;
         this.hp = 15;
         this.maxHp = 15;
+        this.mp = 0;
+        this.maxMp = 0;
         this.attack = 4;
         this.defense = 2;
         this.experience = 0;

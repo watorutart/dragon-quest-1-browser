@@ -11,11 +11,44 @@
         <canvas id="game-canvas" width="800" height="600"></canvas>
         <div id="ui-overlay">
             <div id="status-panel">
+                <div id="player-name">勇者</div>
                 <div id="player-stats">
-                    <span id="player-level">Lv: 1</span>
-                    <span id="player-hp">HP: 15/15</span>
-                    <span id="player-gold">G: 120</span>
+                    <div class="stat-row">
+                        <span class="stat-label">LV</span>
+                        <span id="player-level">1</span>
+                    </div>
+                    <div class="stat-row">
+                        <span class="stat-label">HP</span>
+                        <span id="player-hp">15/15</span>
+                    </div>
+                    <div class="stat-row">
+                        <span class="stat-label">MP</span>
+                        <span id="player-mp">0/0</span>
+                    </div>
+                    <div class="stat-row">
+                        <span class="stat-label">ATK</span>
+                        <span id="player-attack">4</span>
+                    </div>
+                    <div class="stat-row">
+                        <span class="stat-label">DEF</span>
+                        <span id="player-defense">2</span>
+                    </div>
+                    <div class="stat-row">
+                        <span class="stat-label">EXP</span>
+                        <span id="player-exp">0</span>
+                    </div>
+                    <div class="stat-row">
+                        <span class="stat-label">NEXT</span>
+                        <span id="player-exp-next">7</span>
+                    </div>
+                    <div class="stat-row">
+                        <span class="stat-label">G</span>
+                        <span id="player-gold">120</span>
+                    </div>
                 </div>
+            </div>
+            <div id="game-messages">
+                <div id="message-log"></div>
             </div>
         </div>
     </div>

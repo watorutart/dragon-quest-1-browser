@@ -43,20 +43,88 @@ body {
     position: absolute;
     top: 10px;
     left: 10px;
-    background-color: rgba(0, 0, 0, 0.8);
-    border: 2px solid #fff;
-    padding: 10px;
-    font-size: 14px;
+    background-color: #000080;
+    border: 3px solid #fff;
+    border-style: outset;
+    padding: 12px;
+    font-size: 13px;
     pointer-events: auto;
+    min-width: 120px;
+    font-family: 'Courier New', monospace;
+}
+
+#player-name {
+    color: #FFFF00;
+    font-weight: bold;
+    text-align: center;
+    margin-bottom: 8px;
+    font-size: 15px;
+    text-shadow: 1px 1px 0 #000;
 }
 
 #player-stats {
     display: flex;
     flex-direction: column;
-    gap: 5px;
+    gap: 3px;
 }
 
-#player-stats span {
-    color: #fff;
+.stat-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    min-height: 16px;
+}
+
+.stat-label {
+    color: #FFFFFF;
     font-weight: bold;
+    min-width: 40px;
+    text-shadow: 1px 1px 0 #000;
+}
+
+.stat-row span:last-child {
+    color: #FFFF00;
+    font-weight: bold;
+    text-align: right;
+    text-shadow: 1px 1px 0 #000;
+}
+
+#game-messages {
+    position: absolute;
+    bottom: 10px;
+    left: 10px;
+    right: 10px;
+    background-color: rgba(0, 0, 128, 0.9);
+    border: 3px solid #fff;
+    border-style: outset;
+    padding: 8px;
+    max-height: 120px;
+    overflow-y: auto;
+    pointer-events: auto;
+    font-family: 'Courier New', monospace;
+    display: none; /* Initially hidden */
+}
+
+#message-log {
+    color: #FFFFFF;
+    font-size: 12px;
+    line-height: 1.4;
+    text-shadow: 1px 1px 0 #000;
+}
+
+.message {
+    margin-bottom: 4px;
+}
+
+.message.important {
+    color: #FFFF00;
+    font-weight: bold;
+}
+
+.message.error {
+    color: #FF6666;
+}
+
+.message.success {
+    color: #66FF66;
 }
