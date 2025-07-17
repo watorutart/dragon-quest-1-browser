@@ -86,6 +86,10 @@ class Monster {
      * @param {number} damage - 受けるダメージ量
      */
     takeDamage(damage) {
+        // 入力値の検証
+        if (typeof damage !== 'number' || isNaN(damage) || damage < 0) {
+            return;
+        }
         this.hp -= damage;
         if (this.hp < 0) {
             this.hp = 0;

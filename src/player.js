@@ -55,6 +55,10 @@ class Player {
      * @param {number} damage - 受けるダメージ量
      */
     takeDamage(damage) {
+        // 入力値の検証
+        if (typeof damage !== 'number' || isNaN(damage) || damage < 0) {
+            return;
+        }
         this.hp = Math.max(0, this.hp - damage);
     }
     
@@ -110,6 +114,10 @@ class Player {
      * @param {number} x - 設定するX座標
      */
     setX(x) {
+        // 入力値の検証
+        if (typeof x !== 'number' || isNaN(x) || x < 0) {
+            return;
+        }
         this.x = this._validateCoordinate(x);
     }
     
@@ -118,6 +126,10 @@ class Player {
      * @param {number} y - 設定するY座標
      */
     setY(y) {
+        // 入力値の検証
+        if (typeof y !== 'number' || isNaN(y) || y < 0) {
+            return;
+        }
         this.y = this._validateCoordinate(y);
     }
     
@@ -127,6 +139,10 @@ class Player {
      * @param {number} y - Y座標
      */
     setPosition(x, y) {
+        // 入力値の検証
+        if (typeof x !== 'number' || typeof y !== 'number' || isNaN(x) || isNaN(y) || x < 0 || y < 0) {
+            return;
+        }
         this.setX(x);
         this.setY(y);
     }
@@ -182,6 +198,11 @@ class Player {
      * @returns {Object} レベルアップ結果 {leveledUp: boolean, newLevel: number}
      */
     gainExperience(exp) {
+        // 入力値の検証
+        if (typeof exp !== 'number' || isNaN(exp) || exp < 0) {
+            return { leveledUp: false, newLevel: this.level };
+        }
+        
         const oldLevel = this.level;
         this.experience += exp;
         
@@ -264,8 +285,8 @@ class Player {
      * @param {number} amount - 獲得するゴールド量
      */
     gainGold(amount) {
-        if (amount < 0) {
-            console.warn('負の値のゴールドは獲得できません');
+        // 入力値の検証
+        if (typeof amount !== 'number' || isNaN(amount) || amount < 0) {
             return;
         }
         this.gold += amount;
@@ -519,6 +540,12 @@ class Player {
      */
     move(direction, map) {
         const oldPosition = this.getPosition();
+        
+        // 方向の有効性をチェック
+        if (!this._isValidDirection(direction)) {
+            return this._createMoveResult(false, direction, oldPosition, oldPosition);
+        }
+        
         const newPosition = this._calculateNewPosition(direction);
         
         // 移動可能性をチェック
@@ -594,6 +621,19 @@ class Player {
             'left': { x: -1, y: 0 },
             'right': { x: 1, y: 0 }
         };
+    }
+    
+    /**
+     * 移動方向が有効かチェック
+     * @private
+     * @param {string} direction - 移動方向
+     * @returns {boolean} 有効な方向の場合true
+     */
+    _isValidDirection(direction) {
+        if (typeof direction !== 'string') {
+            return false;
+        }
+        return ['up', 'down', 'left', 'right'].includes(direction);
     }
     
     /**

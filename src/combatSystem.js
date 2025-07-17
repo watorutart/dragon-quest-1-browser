@@ -14,8 +14,8 @@ class CombatSystem {
         const MIN_DAMAGE = 1;
         
         // 攻撃力と防御力を取得
-        const attack = attacker.attack || attacker.getAttackPower?.() || 0;
-        const defense = defender.defense || defender.getDefensePower?.() || 0;
+        const attack = attacker?.attack || attacker?.getAttackPower?.() || 0;
+        const defense = defender?.defense || defender?.getDefensePower?.() || 0;
         
         // 入力値の正規化
         const normalizedAttack = CombatSystem._normalizeAttack(attack);
