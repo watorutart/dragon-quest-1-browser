@@ -464,4 +464,9 @@ if (typeof require !== 'undefined') {
             this.isActive = false;
         }
     }
+
+    // ブラウザ環境でのグローバル定義
+    if (typeof window !== 'undefined') {
+        window.FieldState = FieldState;
+    }
 }

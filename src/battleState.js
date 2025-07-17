@@ -349,4 +349,9 @@ if (typeof require !== 'undefined') {
             return Math.max(0.1, Math.min(0.9, finalFleeRate));
         }
     }
+
+    // ブラウザ環境でのグローバル定義
+    if (typeof window !== 'undefined') {
+        window.BattleState = BattleState;
+    }
 }

@@ -574,4 +574,9 @@ if (typeof require !== 'undefined') {
             });
         }
     }
+
+    // ブラウザ環境でのグローバル定義
+    if (typeof window !== 'undefined') {
+        window.StateManager = StateManager;
+    }
 }
