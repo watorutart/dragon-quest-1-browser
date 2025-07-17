@@ -68,6 +68,169 @@ class RenderEngine {
     }
 
     /**
+     * マップタイルを描画
+     * @param {Object} mapData - マップデータ
+     * @param {number} cameraX - カメラX座標
+     * @param {number} cameraY - カメラY座標
+     * @param {number} tileSize - タイルサイズ
+     */
+    renderMap(mapData, cameraX = 0, cameraY = 0, tileSize = 32) {
+        if (!mapData || !mapData.layers || !mapData.tileDefinitions) {
+            console.warn('Invalid map data for rendering');
+            return;
+        }
+        
+        const backgroundLayer = mapData.layers.find(layer => layer.name === 'background');
+        if (!backgroundLayer) {
+            console.warn('Background layer not found in map data');
+            return;
+        }
+        
+        // 表示範囲を計算
+        const tilesPerRow = Math.ceil(this.width / tileSize) + 1;
+        const tilesPerCol = Math.ceil(this.height / tileSize) + 1;
+        const startTileX = Math.floor(cameraX / tileSize);
+        const startTileY = Math.floor(cameraY / tileSize);
+        
+        // タイルを描画
+        for (let row = 0; row < tilesPerCol; row++) {
+            for (let col = 0; col < tilesPerRow; col++) {
+                const tileX = startTileX + col;
+                const tileY = startTileY + row;
+                
+                // マップ境界チェック
+                if (tileX < 0 || tileX >= mapData.width || tileY < 0 || tileY >= mapData.height) {
+                    this.stats.culledDrawCalls++;
+                    continue;
+                }
+                
+                // タイルIDを取得
+                const tileIndex = tileY * mapData.width + tileX;
+                const tileId = backgroundLayer.data[tileIndex];
+                const tileDef = mapData.tileDefinitions[tileId];
+                
+                if (!tileDef) {
+                    continue;
+                }
+                
+                // 描画位置を計算
+                const drawX = col * tileSize - (cameraX % tileSize);
+                const drawY = row * tileSize - (cameraY % tileSize);
+                
+                // タイルを描画（色で代用）
+                this.context.fillStyle = tileDef.color || '#000000';
+                this.context.fillRect(drawX, drawY, tileSize, tileSize);
+                this.stats.drawCalls++;
+                
+                // タイル境界線（デバッグ用、オプション）
+                if (this.debugMode) {
+                    this.context.strokeStyle = '#333333';
+                    this.context.lineWidth = 1;
+                    this.context.strokeRect(drawX, drawY, tileSize, tileSize);
+                }
+            }
+        }
+    }
+
+    /**
+     * プレイヤーを描画
+     * @param {Object} player - プレイヤーオブジェクト
+     * @param {number} cameraX - カメラX座標
+     * @param {number} cameraY - カメラY座標
+     * @param {number} tileSize - タイルサイズ
+     */
+    renderPlayer(player, cameraX = 0, cameraY = 0, tileSize = 32) {
+        if (!player) {
+            return;
+        }
+        
+        // プレイヤーの画面上での位置を計算
+        const screenX = (player.x * tileSize) - cameraX;
+        const screenY = (player.y * tileSize) - cameraY;
+        
+        // 画面外チェック
+        if (screenX < -tileSize || screenX > this.width || 
+            screenY < -tileSize || screenY > this.height) {
+            return;
+        }
+        
+        // プレイヤーを描画（簡易版）
+        this.context.fillStyle = '#FFD700'; // ゴールド色
+        this.context.fillRect(screenX + 4, screenY + 4, tileSize - 8, tileSize - 8);
+        
+        // プレイヤーの詳細描画（簡易アイコン）
+        this.context.fillStyle = '#FF0000'; // 赤色の頭部
+        this.context.fillRect(screenX + 8, screenY + 6, tileSize - 16, 8);
+        
+        this.context.fillStyle = '#0000FF'; // 青色の胴体
+        this.context.fillRect(screenX + 6, screenY + 14, tileSize - 12, 12);
+    }
+
+    /**
+     * NPCを描画
+     * @param {Array} npcs - NPCの配列
+     * @param {number} cameraX - カメラX座標
+     * @param {number} cameraY - カメラY座標
+     * @param {number} tileSize - タイルサイズ
+     */
+    renderNPCs(npcs, cameraX = 0, cameraY = 0, tileSize = 32) {
+        if (!npcs || npcs.length === 0) {
+            return;
+        }
+        
+        npcs.forEach(npc => {
+            // NPCの画面上での位置を計算
+            const screenX = (npc.x * tileSize) - cameraX;
+            const screenY = (npc.y * tileSize) - cameraY;
+            
+            // 画面外チェック
+            if (screenX < -tileSize || screenX > this.width || 
+                screenY < -tileSize || screenY > this.height) {
+                return;
+            }
+            
+            // NPCを描画（種類別の色）
+            let npcColor = '#00FF00'; // デフォルト緑色
+            
+            switch (npc.sprite) {
+                case 'villager':
+                    npcColor = '#8B4513'; // 茶色
+                    break;
+                case 'merchant':
+                    npcColor = '#FF6347'; // トマト色
+                    break;
+                case 'sage':
+                    npcColor = '#9400D3'; // 紫色
+                    break;
+                case 'king':
+                    npcColor = '#DAA520'; // ゴールデンロッド
+                    break;
+                case 'princess':
+                    npcColor = '#FFB6C1'; // ライトピンク
+                    break;
+            }
+            
+            this.context.fillStyle = npcColor;
+            this.context.fillRect(screenX + 2, screenY + 2, tileSize - 4, tileSize - 4);
+            
+            // NPC名表示（オプション）
+            if (this.debugMode) {
+                this.context.fillStyle = '#FFFFFF';
+                this.context.font = '10px monospace';
+                this.context.fillText(npc.name, screenX, screenY - 2);
+            }
+        });
+    }
+
+    /**
+     * デバッグモードの切り替え
+     * @param {boolean} enabled - デバッグモードの有効/無効
+     */
+    setDebugMode(enabled) {
+        this.debugMode = enabled;
+    }
+
+    /**
      * 描画統計をリセット
      */
     resetStats() {

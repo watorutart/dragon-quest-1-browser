@@ -46,13 +46,21 @@ class GameEngine {
     initGameSystems() {
         // プレイヤー作成
         this.player = new Player('勇者', 1);
-        this.player.setPosition(10, 10);
         
-        // マップ作成
-        this.map = new Map(50, 50);
+        // マップ作成と実際のマップデータの読み込み
+        this.map = new Map();
+        this.mapData = window.MapData.createTestWorldMapData();
+        this.map.loadMapData(this.mapData);
+        
+        // プレイヤーの初期位置を設定
+        this.player.setPosition(
+            this.mapData.playerStartPosition.x,
+            this.mapData.playerStartPosition.y
+        );
         
         // 描画エンジン
         this.renderEngine = new RenderEngine(this.canvas);
+        this.renderEngine.setDebugMode(true); // デバッグモード有効
         
         // 入力ハンドラー
         this.inputHandler = new InputHandler();
@@ -69,15 +77,22 @@ class GameEngine {
         // エンディングシステム
         this.endingSystem = new EndingSystem();
         
-        // テスト用のプレイヤー位置
-        this.testPlayerX = 10;
-        this.testPlayerY = 10;
+        // カメラシステムの初期化
+        this.camera = {
+            x: 0,
+            y: 0,
+            targetX: 0,
+            targetY: 0,
+            smoothing: 0.1
+        };
         
         // 初期状態をフィールドに設定
         const fieldState = new FieldState(this.player, this.map, this.encounterSystem);
         this.stateManager.setState(fieldState);
         
         console.log('ゲームシステム初期化完了');
+        console.log('マップ:', this.mapData.worldName);
+        console.log('プレイヤー初期位置:', this.player.x, this.player.y);
     }
     
     /**
@@ -132,6 +147,9 @@ class GameEngine {
      * ゲーム状態更新
      */
     update(deltaTime) {
+        // カメラ更新
+        this.updateCamera();
+        
         // 現在の状態を更新
         const currentState = this.stateManager.getCurrentState();
         if (currentState && currentState.update) {
@@ -140,6 +158,30 @@ class GameEngine {
         
         // UI更新
         this.updateUI();
+    }
+    
+    /**
+     * カメラ更新（プレイヤーを追従）
+     */
+    updateCamera() {
+        if (!this.player) return;
+        
+        const tileSize = 32;
+        
+        // プレイヤーを画面中央に表示する位置を計算
+        this.camera.targetX = (this.player.x * tileSize) - (this.canvas.width / 2);
+        this.camera.targetY = (this.player.y * tileSize) - (this.canvas.height / 2);
+        
+        // カメラのスムーズな移動
+        this.camera.x += (this.camera.targetX - this.camera.x) * this.camera.smoothing;
+        this.camera.y += (this.camera.targetY - this.camera.y) * this.camera.smoothing;
+        
+        // マップ境界での制限
+        const maxCameraX = (this.mapData.width * tileSize) - this.canvas.width;
+        const maxCameraY = (this.mapData.height * tileSize) - this.canvas.height;
+        
+        this.camera.x = Math.max(0, Math.min(maxCameraX, this.camera.x));
+        this.camera.y = Math.max(0, Math.min(maxCameraY, this.camera.y));
     }
     
     /**
@@ -162,14 +204,36 @@ class GameEngine {
         // 画面クリア
         this.renderEngine.clear();
         
-        // テスト描画（デバッグ用）
-        this.renderEngine.testDraw(this.testPlayerX, this.testPlayerY);
+        // 実際のマップを描画
+        if (this.mapData) {
+            this.renderEngine.renderMap(this.mapData, this.camera.x, this.camera.y, 32);
+            this.renderEngine.renderNPCs(this.mapData.npcs, this.camera.x, this.camera.y, 32);
+            this.renderEngine.renderPlayer(this.player, this.camera.x, this.camera.y, 32);
+        }
         
         // 現在の状態を描画
         const currentState = this.stateManager.getCurrentState();
         if (currentState && currentState.render) {
             currentState.render(this.renderEngine);
         }
+        
+        // デバッグ情報表示
+        if (this.renderEngine.debugMode) {
+            this.renderDebugInfo();
+        }
+    }
+    
+    /**
+     * デバッグ情報を描画
+     */
+    renderDebugInfo() {
+        this.renderEngine.drawText(`Player: (${this.player.x}, ${this.player.y})`, 10, 20, '#FFFFFF', '14px monospace');
+        this.renderEngine.drawText(`Camera: (${Math.round(this.camera.x)}, ${Math.round(this.camera.y)})`, 10, 40, '#FFFFFF', '14px monospace');
+        this.renderEngine.drawText(`Map: ${this.mapData.worldName}`, 10, 60, '#FFFFFF', '14px monospace');
+        
+        const stats = this.renderEngine.getStats();
+        this.renderEngine.drawText(`Draw calls: ${stats.drawCalls}`, 10, this.canvas.height - 40, '#FFFFFF', '12px monospace');
+        this.renderEngine.drawText(`Culled: ${stats.culledDrawCalls}`, 10, this.canvas.height - 20, '#FFFFFF', '12px monospace');
     }
     
     /**
@@ -177,8 +241,13 @@ class GameEngine {
      */
     setupInputHandlers() {
         this.inputHandler.onKeyDown = (key) => {
-            // テスト用の移動処理
-            this.handleTestMovement(key);
+            // プレイヤー移動処理
+            this.handlePlayerMovement(key);
+            
+            // デバッグモード切り替え
+            if (key === 'F3') {
+                this.renderEngine.setDebugMode(!this.renderEngine.debugMode);
+            }
             
             const currentState = this.stateManager.getCurrentState();
             if (currentState && currentState.handleInput) {
@@ -190,33 +259,48 @@ class GameEngine {
     }
     
     /**
-     * テスト用の移動処理
+     * プレイヤー移動処理
      */
-    handleTestMovement(key) {
-        const maxX = Math.floor(this.canvas.width / 32) - 1;
-        const maxY = Math.floor(this.canvas.height / 32) - 1;
+    handlePlayerMovement(key) {
+        if (!this.player || !this.map) return;
+        
+        let newX = this.player.x;
+        let newY = this.player.y;
         
         switch(key) {
             case 'ArrowUp':
             case 'w':
             case 'W':
-                if (this.testPlayerY > 0) this.testPlayerY--;
+                newY--;
                 break;
             case 'ArrowDown':
             case 's':
             case 'S':
-                if (this.testPlayerY < maxY) this.testPlayerY++;
+                newY++;
                 break;
             case 'ArrowLeft':
             case 'a':
             case 'A':
-                if (this.testPlayerX > 0) this.testPlayerX--;
+                newX--;
                 break;
             case 'ArrowRight':
             case 'd':
             case 'D':
-                if (this.testPlayerX < maxX) this.testPlayerX++;
+                newX++;
                 break;
+            default:
+                return; // 移動キーでない場合は何もしない
+        }
+        
+        // 移動可能かチェック
+        if (this.map.isWalkable(newX, newY)) {
+            this.player.setPosition(newX, newY);
+            
+            // エンカウント判定（フィールド状態の場合）
+            const currentState = this.stateManager.getCurrentState();
+            if (currentState && currentState.checkEncounter) {
+                currentState.checkEncounter();
+            }
         }
     }
 }
