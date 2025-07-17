@@ -315,6 +315,25 @@ class GameEngine {
         const currentState = this.stateManager.getCurrentState();
         if (currentState && currentState.constructor.name === 'BattleState') {
             this.renderEngine.renderBattleScreen(currentState);
+            
+            // 戦闘UI表示
+            this.renderEngine.drawText('戦闘中', this.canvas.width / 2 - 40, 50, '#FFFFFF', '24px Arial');
+            this.renderEngine.drawText(`${currentState.monster.name} HP:${currentState.monster.hp}/${currentState.monster.maxHp}`, 50, 100, '#FFFFFF', '18px Arial');
+            this.renderEngine.drawText(`${currentState.player.name} HP:${currentState.player.hp}/${currentState.player.maxHp}`, 50, 130, '#FFFFFF', '18px Arial');
+            
+            // コマンド表示
+            if (currentState.currentTurn === 'player') {
+                this.renderEngine.drawText('コマンドを選択してください:', 50, 200, '#FFFF00', '16px Arial');
+                this.renderEngine.drawText('1: 攻撃', 70, 230, '#FFFFFF', '16px Arial');
+                this.renderEngine.drawText('2: 逃走', 70, 250, '#FFFFFF', '16px Arial');
+            } else {
+                this.renderEngine.drawText('モンスターのターン...', 50, 200, '#FF0000', '16px Arial');
+            }
+            
+            // メッセージ表示
+            if (currentState.lastMessage) {
+                this.renderEngine.drawText(currentState.lastMessage, 50, 300, '#00FF00', '16px Arial');
+            }
         }
     }
     
