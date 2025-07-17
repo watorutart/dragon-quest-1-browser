@@ -580,21 +580,28 @@ class GameEngine {
      * @param {string} key - 押されたキー
      */
     handleBattleInput(key) {
-        const currentState = this.stateManager.getCurrentState();
-        if (!currentState || currentState.constructor.name !== 'BattleState') return;
+        console.log('戦闘入力:', key);
+        const currentState = this.stateManager.getBattleState();
+        console.log('戦闘状態:', currentState);
+        
+        if (!currentState) return;
         
         switch (key) {
             case '1':
+                console.log('攻撃コマンド実行');
                 // 攻撃コマンド
                 const attackResult = currentState.executeCommand('attack');
+                console.log('攻撃結果:', attackResult);
                 if (attackResult.success) {
                     currentState.lastMessage = `${attackResult.damage}のダメージ！`;
                     currentState.nextTurn();
                 }
                 break;
             case '2':
+                console.log('逃走コマンド実行');
                 // 逃走コマンド
                 const fleeResult = currentState.executeCommand('flee');
+                console.log('逃走結果:', fleeResult);
                 if (fleeResult.success) {
                     currentState.lastMessage = '逃走成功！';
                     this.endBattle({ victory: false, fled: true });
@@ -603,6 +610,8 @@ class GameEngine {
                     currentState.nextTurn();
                 }
                 break;
+            default:
+                console.log('無効なキー:', key);
         }
         
         // モンスターターンの自動実行
