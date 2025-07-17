@@ -10,7 +10,7 @@ class CombatSystem {
      * @param {Player|Monster} defender - 防御者オブジェクト
      * @returns {number} 計算されたダメージ
      */
-    calculateDamage(attacker, defender) {
+    static calculateDamage(attacker, defender) {
         const MIN_DAMAGE = 1;
         
         // 攻撃力と防御力を取得
@@ -57,8 +57,7 @@ class CombatSystem {
      * @returns {Object} 攻撃結果
      */
     static playerAttack(player, monster) {
-        const combatSystem = new CombatSystem();
-        const damage = combatSystem.calculateDamage(player, monster);
+        const damage = CombatSystem.calculateDamage(player, monster);
         monster.takeDamage(damage);
         
         return {
@@ -76,8 +75,7 @@ class CombatSystem {
      * @returns {Object} 攻撃結果
      */
     static monsterAttack(monster, player) {
-        const combatSystem = new CombatSystem();
-        const damage = combatSystem.calculateDamage(monster, player);
+        const damage = CombatSystem.calculateDamage(monster, player);
         player.takeDamage(damage);
         
         return {
