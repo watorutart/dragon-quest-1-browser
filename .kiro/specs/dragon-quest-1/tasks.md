@@ -250,7 +250,7 @@
 実際のブラウザ環境でドラゴンクエスト1ゲームの包括的なE2Eテストを実行し、要求仕様書の6つのRequirements に対する動作検証を行いました。
 
 #### テスト実行環境
-- ブラウザ: Chrome/Playwright自動化
+- ブラウザ: Chrome/Playwright自動化 (Playwright v1.35.0 + Chrome 112.0.5615.49)
 - サーバー: Python HTTP Server (localhost:8000)
 - テスト日時: 2025年1月実行
 - テスト範囲: Requirements 1-6の主要機能
